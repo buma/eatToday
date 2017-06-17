@@ -90,7 +90,7 @@ class FoodNutrition(Base):
     cholestrl = Column(Float)
     items = relationship("Item", backref="nutri_info")
     def __repr__(self):
-        return "<kcal {} carb: {:.2f} belj:{:.2f} masc:{:.2f}>".format(self.kcal,
+        return "<kcal {:.2f} carb: {:.2f} belj:{:.2f} masc:{:.2f}>".format(self.kcal,
                 self.carb, self.protein, self.lipid)
 
 class LocalNutrition(Base):
