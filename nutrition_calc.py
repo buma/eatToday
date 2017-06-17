@@ -1,7 +1,7 @@
 import itertools
 import re
 
-nondigit = re.compile("(?P<number>\d+)(?P<desc>\D+)")
+nondigit = re.compile("(?P<number>[\d\.]+)(?P<desc>\D+)")
 from connectSettings import connectString
 
 import sqlalchemy                                                                                                                                                
