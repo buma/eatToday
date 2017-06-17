@@ -19,6 +19,7 @@ class Item(Base):
     type = Column(CHAR(length=8))
     description = Column(Text, nullable=True)
     nutrition = Column(Text(length=100), nullable=True)
+    calc_nutrition = Column(ForeignKey('foodnutrition.id'))
 
     def __init__(self, type, description, nutrition, time=None):
         self.type = type
@@ -40,8 +41,9 @@ class Item(Base):
 class FoodNutrition(Base):
     __tablename__ = 'foodnutrition'
 
-    ndbno = Column(Integer, primary_key=True)
-    desc = Column(Text(100))
+    id = Column(Integer, primary_key=True)
+    nutrition = Column(Text(length=100), unique=True)
+    desc = Column(Text(400))
     water = Column(Float)
     kcal = Column(Float)
     protein = Column(Float)
@@ -86,6 +88,10 @@ class FoodNutrition(Base):
     famono = Column(Float)
     fapoly = Column(Float)
     cholestrl = Column(Float)
+    items = relationship("Item", backref="nutri_info")
+    def __repr__(self):
+        return "<kcal {} carb: {:.2f} belj:{:.2f} masc:{:.2f}>".format(self.kcal,
+                self.carb, self.protein, self.lipid)
 
 class LocalNutrition(Base):
     __tablename__ = 'nutrition'
