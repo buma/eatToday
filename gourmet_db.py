@@ -156,8 +156,14 @@ class Nutrition(Base):
         total_protein = self.protein * other
         total_lipid = self.lipid * other
         total_carb = self.carb * other
-        total_fiber = self.fiber * other
-        total_sugar = self.sugar * other
+        if self.fiber is None:
+            total_fiber = 0
+        else:
+            total_fiber = self.fiber * other
+        if self.sugar is None:
+            total_sugar = 0
+        else:
+            total_sugar = self.sugar * other
         return Nutrition(desc=self.desc, kcal=total_kcal,
                 protein=total_protein, lipid=total_lipid, carb=total_carb,
                 fiber=total_fiber, sugar=total_sugar)
