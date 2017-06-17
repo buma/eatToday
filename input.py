@@ -9,6 +9,7 @@ import sqlalchemy
 from sqlalchemy.orm import sessionmaker                                                                                                                          
 from sqlalchemy.exc import DBAPIError   
 from database import Item
+from util import sort_nutrition_string
 
 class MainWindow(QMainWindow, Ui_MainWindow):
     def __init__(self, parent = None):
@@ -47,7 +48,10 @@ class MainWindow(QMainWindow, Ui_MainWindow):
     def add_new(self):
         desc = self.le_description.text()
         nutrition = self.le_nutrition.text() if self.le_nutrition.isEnabled() \
+            and len(self.le_nutrition.text()) > 3 \
             else None
+        if nutrition is not None:
+            nutrition = sort_nutrition_string(nutrition)
         item = Item(description=desc, nutrition=nutrition,
                 time=self.d_edit.dateTime().toPyDateTime(),
                 type=self.cb_type.currentText())
