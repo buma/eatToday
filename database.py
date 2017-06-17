@@ -93,6 +93,28 @@ class FoodNutrition(Base):
         return "<kcal {:.2f} carb: {:.2f} belj:{:.2f} masc:{:.2f}>".format(self.kcal,
                 self.carb, self.protein, self.lipid)
 
+    #Sum items together
+    def __add__(self, other):
+        together = {}
+        skip = set(["items", "id", "desc", "nutrition", "_sa_instance_state"])
+        self_vars = vars(self)
+        other_vars = vars(other)
+        for key, value in self_vars.items():
+            if key not in skip:
+                self_value = 0 if self_vars[key] is None else self_vars[key]
+                other_value = 0 if other_vars[key] is None else other_vars[key]
+                together[key]=self_value+other_value
+        return FoodNutrition(**together)
+
+    def __radd__(self, other):
+        #Add support for sum
+        if other == 0:
+            return self
+        else:
+            raise  NotImplementedError()
+
+
+
 class LocalNutrition(Base):
     __tablename__ = 'nutrition'
 

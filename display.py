@@ -23,11 +23,13 @@ items = session.query(Item) \
         .order_by(Item.time)
 #items = session.query(Item).filter(Item.id==274)
 
-
+nutritions = []
 for item in items:
     print (item)
     if item.nutri_info is not None:
         print (item.nutri_info)
+        nutritions.append(item.nutri_info)
+print (sum(nutritions))
     #print (get_nutrition(item.nutrition))
     #print ()
 #get_nutrition("2cup*SPINACH+2*COOKED_NOSKIN_POTATO+2tsp*GLUTENFREE_BUTTER")
