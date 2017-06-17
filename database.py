@@ -38,6 +38,13 @@ class Item(Base):
         return "<Item('%d', '%s', Desc:'%s' Type:'%s', Nutrition:'%s')>" % (id, self.time,
                 self.description, self.type, self.nutrition)
 
+    def __format__(self, format):
+        ITEM="{time:%H:%M} {type:^8} {description:50.50} {nutri_info}"
+        nutri_info = self.nutri_info if self.nutri_info is not None else ""
+        return ITEM.format(time=self.time, type=self.type,
+                description=self.description,
+                nutri_info=nutri_info)
+
 class FoodNutrition(Base):
     __tablename__ = 'foodnutrition'
 
@@ -89,8 +96,13 @@ class FoodNutrition(Base):
     fapoly = Column(Float)
     cholestrl = Column(Float)
     items = relationship("Item", backref="nutri_info")
+
     def __repr__(self):
-        return "<kcal {:.2f} carb: {:.2f} belj:{:.2f} masc:{:.2f}>".format(self.kcal,
+        return "<kcal {:3.2f} carb: {:.2f} belj:{:.2f} masc:{:.2f}>".format(self.kcal,
+                self.carb, self.protein, self.lipid)
+
+    def __format__(self, format):
+        return "{:6.2f} {:6.2f} {:6.2f} {:6.2f}".format(self.kcal,
                 self.carb, self.protein, self.lipid)
 
     #Sum items together
