@@ -24,7 +24,7 @@ with open("./nutriondata.csv", "r") as f:
                     if len(val)==0:
                         line[key]=None
                     elif key == "gramwt1":
-                        line[key]=int(val)
+                        line[key]=locale.atof(val)
                 else:
                     line[key]=locale.atof(val)
         print (line)
