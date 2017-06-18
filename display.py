@@ -39,9 +39,10 @@ TEMPL+="\nBeljakovin na 2 uri:{:.2f}\nKalorije do kosila:{:.2f}"
 
 nutritions = []
 ITEM="{time:^5} {type:^8} {description:50.50} {kalorije:^6} {hidrati:^6} {beljakovine:^7}"
-ITEM+=" {fat:^6}"
+ITEM+=" {fat:^6} {fiber:^6} {sugar:^6}"
 print (ITEM.format(time="time", type="type", description="description",
-        kalorije="kcal", hidrati="carb", beljakovine="protein", fat="fat"))
+        kalorije="kcal", hidrati="carb", beljakovine="protein", fat="fat",
+        fiber="fiber", sugar="sugar"))
 sumed_lunch = None
 for item in items:
     print ("{}".format(item))

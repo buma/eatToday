@@ -102,8 +102,8 @@ class FoodNutrition(Base):
                 self.carb, self.protein, self.lipid)
 
     def __format__(self, format):
-        return "{:6.2f} {:6.2f} {:6.2f} {:6.2f}".format(self.kcal,
-                self.carb, self.protein, self.lipid)
+        return "{:6.2f} {:6.2f} {:6.2f} {:6.2f} {:6.3} {:6.3}".format(self.kcal,
+                self.carb, self.protein, self.lipid, self.fiber, self.sugar)
 
     #Sum items together
     def __add__(self, other):
