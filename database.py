@@ -105,8 +105,9 @@ class FoodNutrition(Base):
                 self.carb, self.protein, self.lipid)
 
     def __format__(self, format):
-        return "{:6.2f} {:6.2f} {:6.2f} {:6.2f} {:6.3} {:6.3}".format(self.kcal,
-                self.carb, self.protein, self.lipid, self.fiber, self.sugar)
+        return "{:6.2f} {:6.2f} {:6.2f} {:6.2f} {:6.3} {:6.3} {:10.5}".format(self.kcal,
+                self.carb, self.protein, self.lipid, self.fiber, self.sugar,
+                0.0 if self.water is None else self.water)
 
     #Sum items together
     def __add__(self, other):
@@ -135,12 +136,14 @@ class LocalNutrition(Base):
 
     ndbno = Column(Integer, primary_key=True)
     desc = Column(Text(100))
+    water = Column(Float)
     kcal = Column(Float)
     protein = Column(Float)
     lipid = Column(Float)
     carb = Column(Float)
     fiber = Column(Float)
     sugar = Column(Float)
+    calcium = Column(Float)
     gramwt1 = Column(Float)
     gramdsc1 = Column(Text(100))
 
@@ -164,16 +167,18 @@ class LocalNutrition(Base):
                 together[key] = value
         return Nutrition(**together)
     
-    def __rmul__(self, other):
-        total_kcal = self.kcal * other
-        total_protein = self.protein * other
-        total_lipid = self.lipid * other
-        total_carb = self.carb * other
-        total_fiber = self.fiber * other
-        total_sugar = self.sugar * other
-        return LocalNutrition(desc=self.desc, kcal=total_kcal,
-                protein=total_protein, lipid=total_lipid, carb=total_carb,
-                fiber=total_fiber, sugar=total_sugar)
+    def __rmul__(self, other_value):
+        together = {}
+        skip = set(["ndbno", "desc", "foodgroup", "gramwt1",
+            "gramdsc1", "gramwt2", "gramdsc2", "refusepct",
+            "_sa_instance_state"])
+        self_vars = vars(self)
+        for key, value in self_vars.items():
+            if key not in skip:
+                self_value = 0 if self_vars[key] is None else self_vars[key]
+                together[key]=self_value * other_value
+        together["desc"] = self.desc
+        return LocalNutrition(**together)
 
     def __repr__(self):
         return "<{} {} {} kcal {} g {}>".format(self.desc, self.ndbno,
