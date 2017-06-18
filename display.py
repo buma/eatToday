@@ -4,23 +4,24 @@ import datetime
 import math
 
 nondigit = re.compile("(?P<number>\d+)(?P<desc>\D+)")
-from connectSettings import connectString
 
 import sqlalchemy                                                                                                                                                
 from sqlalchemy.orm import sessionmaker                                                                                                                          
 from sqlalchemy.exc import DBAPIError   
+from sqlalchemy.orm import joinedload
 from database import Item, FoodNutrition
+from connectSettings import connectString
 
 engine = sqlalchemy.create_engine(connectString)
-gourmet_engine = \
-        sqlalchemy.create_engine("sqlite:////home/mabu/.gourmet/recipes_copy.db")
 
 Session = sessionmaker(bind=engine)
 
 session = Session() 
 
 
+# Joinedload loads stuff in one query instead of multiple ones
 items = session.query(Item) \
+        .options(joinedload(Item.nutri_info)) \
         .filter(Item.time.between('2017-06-17', '2017-06-18')) \
         .order_by(Item.time)
 #items = session.query(Item).filter(Item.id==274)
