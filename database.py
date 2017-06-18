@@ -5,6 +5,8 @@ from sqlalchemy import Column, DateTime, Integer, Text, CHAR, Float, ForeignKey
 from sqlalchemy.orm import relationship
 from sqlalchemy.ext.declarative import declarative_base
 
+from gourmet_db import Nutrition
+
 
 Base = declarative_base()
 metadata = Base.metadata
@@ -142,16 +144,24 @@ class LocalNutrition(Base):
     gramdsc1 = Column(Text(100))
 
     def __add__(self, other):
-        total_kcal = self.kcal + other.kcal
-        total_protein = self.protein + other.protein
-        total_lipid = self.lipid + other.lipid
-        total_carb = self.carb + other.carb
-        total_fiber = self.fiber + other.fiber
-        total_sugar = self.sugar + other.sugar
-        all_desc = self.desc + " " + other.desc
-        return LocalNutrition(desc=all_desc, kcal=total_kcal,
-                protein=total_protein, lipid=total_lipid, carb=total_carb,
-                fiber=total_fiber, sugar=total_sugar)
+        together = {}
+        skip = set(["ndbno", "desc", "foodgroup", "gramwt1",
+            "gramdsc1", "gramwt2", "gramdsc2", "refusepct",
+            "_sa_instance_state"])
+        self_vars = vars(self)
+        other_vars = vars(other)
+        for key, value in self_vars.items():
+            if key not in skip:
+                self_value = 0 if self_vars[key] is None else self_vars[key]
+                other_value = 0 if key not in other_vars or other_vars[key] is None else other_vars[key]
+                together[key]=self_value+other_value
+        together["desc"] = self.desc + " | " + other.desc
+#if we are adding LocalNutrition+Nutrition this adds Nutrition data which would
+        #otherwise be forgotten
+        for key, value in other_vars.items():
+            if key not in together and key not in skip:
+                together[key] = value
+        return Nutrition(**together)
     
     def __rmul__(self, other):
         total_kcal = self.kcal * other

@@ -140,33 +140,35 @@ class Nutrition(Base):
     foodgroup = Column(Text)
     
     def __add__(self, other):
-        total_kcal = self.kcal + other.kcal
-        total_protein = self.protein + other.protein
-        total_lipid = self.lipid + other.lipid
-        total_carb = self.carb + other.carb
-        total_fiber = self.fiber + other.fiber
-        total_sugar = self.sugar + other.sugar
-        all_desc = self.desc + " " + other.desc
-        return Nutrition(desc=all_desc, kcal=total_kcal,
-                protein=total_protein, lipid=total_lipid, carb=total_carb,
-                fiber=total_fiber, sugar=total_sugar)
+        together = {}
+        skip = set(["ndbno", "desc", "foodgroup", "gramwt1",
+            "gramdsc1", "gramwt2", "gramdsc2", "refusepct",
+            "_sa_instance_state"])
+        self_vars = vars(self)
+        other_vars = vars(other)
+        for key, value in self_vars.items():
+            if key not in skip:
+                self_value = 0 if self_vars[key] is None else self_vars[key]
+                other_value = 0 if key not in other_vars or other_vars[key] is None else other_vars[key]
+                together[key]=self_value+other_value
+        for key, value in other_vars.items():
+            if key not in together and key not in skip:
+                together[key] = value
+        together["desc"] = self.desc + " | " + other.desc
+        return Nutrition(**together)
     
-    def __rmul__(self, other):
-        total_kcal = self.kcal * other
-        total_protein = self.protein * other
-        total_lipid = self.lipid * other
-        total_carb = self.carb * other
-        if self.fiber is None:
-            total_fiber = 0
-        else:
-            total_fiber = self.fiber * other
-        if self.sugar is None:
-            total_sugar = 0
-        else:
-            total_sugar = self.sugar * other
-        return Nutrition(desc=self.desc, kcal=total_kcal,
-                protein=total_protein, lipid=total_lipid, carb=total_carb,
-                fiber=total_fiber, sugar=total_sugar)
+    def __rmul__(self, other_value):
+        together = {}
+        skip = set(["ndbno", "desc", "foodgroup", "gramwt1",
+            "gramdsc1", "gramwt2", "gramdsc2", "refusepct",
+            "_sa_instance_state"])
+        self_vars = vars(self)
+        for key, value in self_vars.items():
+            if key not in skip:
+                self_value = 0 if self_vars[key] is None else self_vars[key]
+                together[key]=self_value * other_value
+        together["desc"] = self.desc
+        return Nutrition(**together)
 
     def __repr__(self):
         return "<{} {} {} kcal {} g {}>".format(self.desc, self.ndbno, self.kcal,
