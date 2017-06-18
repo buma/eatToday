@@ -43,8 +43,9 @@ class Item(Base):
     def __format__(self, format):
         ITEM="{time:%H:%M} {type:^8} {description:50.50} {nutri_info}"
         nutri_info = self.nutri_info if self.nutri_info is not None else ""
+        desc = self.description if self.description is not None else ""
         return ITEM.format(time=self.time, type=self.type,
-                description=self.description,
+                description=desc,
                 nutri_info=nutri_info)
 
 class FoodNutrition(Base):
