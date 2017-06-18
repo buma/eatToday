@@ -55,7 +55,7 @@ if sumed_lunch is None:
     sumed_lunch = sumed
 missing_kcal = needed_kcal-sumed.kcal
 missing_protein = needed_protein-sumed.protein
-print ("SUM:"," "*60+"{}".format(sumed))
+print ("SUM:"," "*61+"{}".format(sumed))
 print (TEMPL.format(missing_kcal, missing_kcal/(hours_to_evening/2),
     missing_protein, missing_protein/(hours_to_evening/2),
     needed_kcal/2-sumed_lunch.kcal))
