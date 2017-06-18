@@ -6,6 +6,7 @@ from sqlalchemy.orm import relationship
 from sqlalchemy.ext.declarative import declarative_base
 
 from gourmet_db import Nutrition
+import colorama
 
 
 Base = declarative_base()
@@ -105,9 +106,31 @@ class FoodNutrition(Base):
                 self.carb, self.protein, self.lipid)
 
     def __format__(self, format):
-        return "{:6.2f} {:6.2f} {:6.2f} {:6.2f} {:6.3} {:6.3} {:10.5}".format(self.kcal,
-                self.carb, self.protein, self.lipid, self.fiber, self.sugar,
-                0.0 if self.water is None else self.water)
+        if format == "diff":
+            kcal = "{:7.2f}".format(self.kcal)
+            protein = "{:7.2f}".format(self.protein)
+            water = "{:7.2f}".format(0.0 if self.water is None else self.water)
+
+            if self.kcal > 0:
+                kcal = colorama.Fore.GREEN + kcal + colorama.Style.RESET_ALL
+            else:
+                kcal = colorama.Fore.RED + kcal + colorama.Style.RESET_ALL
+            if self.protein > 0:
+                protein = colorama.Fore.GREEN + protein + colorama.Style.RESET_ALL
+            else:
+                protein = colorama.Fore.RED + protein + colorama.Style.RESET_ALL
+            if self.water > 0:
+                water = colorama.Fore.GREEN + water + colorama.Style.RESET_ALL
+            else:
+                water = colorama.Fore.RED + water + colorama.Style.RESET_ALL
+            return "{} {:6.2f} {} {:6.2f} {:6.2f} {:6.2f} {}".format(kcal,
+                    self.carb, protein, self.lipid, self.fiber, self.sugar,
+                    water)
+
+        else:
+            return "{:7.2f} {:7.2f} {:6.2f} {:6.2f} {:6.2f} {:6.2f} {:7.2f}".format(self.kcal,
+                    self.carb, self.protein, self.lipid, self.fiber, self.sugar,
+                    0.0 if self.water is None else self.water)
 
     #Sum items together
     def __add__(self, other):

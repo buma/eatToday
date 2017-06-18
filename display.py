@@ -13,6 +13,9 @@ from sqlalchemy.orm import joinedload
 import dateutil.rrule
 import dateutil.relativedelta
 
+import colorama
+colorama.init(autoreset=True)
+
 from database import Item, FoodNutrition
 from connectSettings import connectString
 
@@ -24,7 +27,16 @@ session = Session()
 
 weight = 63
 needed_kcal = 2200
+needed_kcal_lunch = 1300
+#Calculated based on 15:00-7:00/2 per 2 hours
+needed_kcal_2_hours_till_lunch=needed_kcal_lunch/(8/2) 
+lunch_kcal=500
+needed_kcal_2_hours_after_lunch=(needed_kcal-4*needed_kcal_2_hours_till_lunch-lunch_kcal)/2
+
 needed_protein = 1.5*weight
+needed_protein_2_hours_till_lunch=needed_kcal_2_hours_till_lunch/needed_kcal*needed_protein
+lunch_protein=lunch_kcal/needed_kcal*needed_protein
+needed_protein_2_hours_after_lunch=needed_kcal_2_hours_after_lunch/needed_kcal*needed_protein
 
 
 def show_date(date):
@@ -48,18 +60,52 @@ def show_date(date):
     TEMPL+="\nBeljakovin na 2 uri:{:.2f}\nKalorije do kosila:{:.2f}"
 
     nutritions = []
-    ITEM="{time:^5} {type:^8} {description:50.50} {kalorije:^6} {hidrati:^6} {beljakovine:^7}"
-    ITEM+=" {fat:^6} {fiber:^6} {sugar:^6} {water:^10}"
+    ITEM="{time:^5} {type:^8} {description:50.50} {kalorije:^7} {hidrati:^6} {beljakovine:^8}"
+    ITEM+=" {fat:^6} {fiber:^6} {sugar:^6} {water:^7}"
     print (ITEM.format(time="time", type="type", description="description",
             kalorije="kcal", hidrati="carb", beljakovine="protein", fat="fat",
             fiber="fiber", sugar="sugar", water="water"))
     sumed_lunch = None
+    show_part = set()
     for item in items:
         #print ("FORMAT:|",item.__format__(""),"|")
+        if item.time.hour >= 9 and item.time.hour not in show_part: 
+            hour=item.time.hour
+            if item.time.hour%2==0 and hour-1 not in show_part:
+                hour-=1
+            if hour%2==1:
+                show_part.add(hour)
+                sumpart=sum(nutritions)
+                water_factor=(hour-7)/2
+                if hour < 17:
+                    factor=(hour-7)/2
+                    should_part=FoodNutrition(kcal=-needed_kcal_2_hours_till_lunch*factor,
+                            protein=-needed_protein_2_hours_till_lunch*factor, 
+                            carb=0, lipid=0, water=-300*water_factor, fiber=0, sugar=0)
+                elif hour==17:
+                    should_part=FoodNutrition(kcal=-needed_kcal_2_hours_till_lunch*4-lunch_kcal,
+                            protein=-needed_protein_2_hours_till_lunch*4-lunch_protein, 
+                            carb=0, lipid=0, water=-300*water_factor, fiber=0, sugar=0)
+                elif hour>17:
+                    factor=(hour-17)/2
+                    kcal = needed_kcal_2_hours_till_lunch*4+lunch_kcal
+                    kcal += needed_kcal_2_hours_after_lunch*factor
+
+                    protein = needed_protein_2_hours_till_lunch*4+lunch_protein
+                    protein += needed_protein_2_hours_after_lunch*factor
+                    should_part=FoodNutrition(kcal=-kcal,protein=-protein, 
+                            carb=0, lipid=0, water=-300*water_factor, fiber=0, sugar=0)
+                #print ("SUM:", hour)
+                #print("SUM", "{}".format(sumpart))
+                #print("SHOULD", should_part.kcal, should_part.protein)
+                print ("DIF:", hour, ":00", " "*55+"{:diff}".format(should_part+sumpart))
+
+
+
         print ("{}".format(item))
         if item.nutri_info is not None:
             nutritions.append(item.nutri_info)
-            if sumed_lunch is None and item.time.hour >= 14:
+            if sumed_lunch is None and item.time.hour >= 15:
                 sumed_lunch = sum(nutritions)
     sumed = (sum(nutritions))
     if sumed_lunch is None:
@@ -73,7 +119,7 @@ def show_date(date):
             hours_to_evening > 0 else 0
     print (TEMPL.format(missing_kcal, missing_kcal_time,
         missing_protein, missing_protein_time,
-        needed_kcal/2-sumed_lunch.kcal))
+        needed_kcal_lunch-sumed_lunch.kcal))
 
 #dates = dateutil.rrule.rrule(dateutil.rrule.DAILY,
         #dtstart=datetime.datetime(2017,6,5), count=12)
