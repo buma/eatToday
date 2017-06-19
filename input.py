@@ -1,3 +1,4 @@
+import itertools
 from PyQt5.QtCore import *                                                                                                                                       
 from PyQt5.QtGui  import *
 from PyQt5.QtWidgets import QMainWindow, QCompleter
@@ -8,7 +9,8 @@ from connectSettings import connectString
 import sqlalchemy                                                                                                                                                
 from sqlalchemy.orm import sessionmaker                                                                                                                          
 from sqlalchemy.exc import DBAPIError   
-from database import Item
+from database import Item, LocalNutritionaliase
+from gourmet_db import Nutritionaliase
 from util import sort_nutrition_string
 
 class MainWindow(QMainWindow, Ui_MainWindow):
@@ -23,8 +25,24 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         self.buttonBox.accepted.connect(self.add_new)
         self.cb_type.currentTextChanged.connect(self.enable_nutrition)
         engine = sqlalchemy.create_engine(connectString)
-        Session = sessionmaker(bind=engine)
+        gourmet_engine = \
+                sqlalchemy.create_engine("sqlite:////home/mabu/.gourmet/recipes_copy.db")
+        Session = sessionmaker()
+        Session.configure(binds={Item: engine,
+            Nutritionaliase: gourmet_engine,
+            LocalNutritionaliase: engine,
+            })
         self.session = Session()
+
+        model_keys = QStringListModel()
+        aliases = itertools.chain(self.session \
+                .query(LocalNutritionaliase.ingkey),
+                self.session.query(Nutritionaliase.ingkey))
+        aliases_list = sorted(x[0].upper() for x in aliases)
+        model_keys.setStringList(aliases_list)
+
+        self.lv_keys.setModel(model_keys)
+        self.lv_keys.doubleClicked.connect(self.add_key_to_nutrition)
 
         self.completer = QCompleter()
         self.le_description.setCompleter(self.completer)
@@ -39,9 +57,14 @@ class MainWindow(QMainWindow, Ui_MainWindow):
     def enable_nutrition(self, val):
         is_nutrition = val == "HRANA" or val == "PIJAČA"
         self.le_nutrition.setEnabled(is_nutrition)
+        self.lv_keys.setEnabled(is_nutrition)
         self.model_data = self.session.query(Item.description.distinct()).filter(Item.type==self.cb_type.currentText())
         items = (x[0] for x in self.model_data.all())
         self.model.setStringList(items)
+
+    def add_key_to_nutrition(self, model_index):
+        if self.le_nutrition.isEnabled():
+            self.le_nutrition.insert(model_index.data())
 
 
     #@pyqtSlot("")
