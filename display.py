@@ -37,6 +37,33 @@ needed_protein = 1.5*weight
 needed_protein_2_hours_till_lunch=needed_kcal_2_hours_till_lunch/needed_kcal*needed_protein
 lunch_protein=lunch_kcal/needed_kcal*needed_protein
 needed_protein_2_hours_after_lunch=needed_kcal_2_hours_after_lunch/needed_kcal*needed_protein
+show_part = set()
+def display_part(hour, nutritions):
+    show_part.add(hour)
+    sumpart=sum(nutritions)
+    water_factor=(hour-7)/2
+    if hour < 17:
+        factor=(hour-7)/2
+        should_part=FoodNutrition(kcal=-needed_kcal_2_hours_till_lunch*factor,
+                protein=-needed_protein_2_hours_till_lunch*factor, 
+                carb=0, lipid=0, water=-300*water_factor, fiber=0, sugar=0)
+    elif hour==17:
+        should_part=FoodNutrition(kcal=-needed_kcal_2_hours_till_lunch*4-lunch_kcal,
+                protein=-needed_protein_2_hours_till_lunch*4-lunch_protein, 
+                carb=0, lipid=0, water=-300*water_factor, fiber=0, sugar=0)
+    elif hour>17:
+        factor=(hour-17)/2
+        kcal = needed_kcal_2_hours_till_lunch*4+lunch_kcal
+        kcal += needed_kcal_2_hours_after_lunch*factor
+
+        protein = needed_protein_2_hours_till_lunch*4+lunch_protein
+        protein += needed_protein_2_hours_after_lunch*factor
+        should_part=FoodNutrition(kcal=-kcal,protein=-protein, 
+                carb=0, lipid=0, water=-300*water_factor, fiber=0, sugar=0)
+    #print ("SUM:", hour)
+    #print("SUM", "{}".format(sumpart))
+    #print("SHOULD", should_part.kcal, should_part.protein)
+    print ("DIF:", hour, ":00", " "*55+"{:diff}".format(should_part+sumpart))
 
 
 def show_date(date):
@@ -66,7 +93,6 @@ def show_date(date):
             kalorije="kcal", hidrati="carb", beljakovine="protein", fat="fat",
             fiber="fiber", sugar="sugar", water="water"))
     sumed_lunch = None
-    show_part = set()
     for item in items:
         #print ("FORMAT:|",item.__format__(""),"|")
         if item.time.hour >= 9 and item.time.hour not in show_part: 
@@ -74,31 +100,7 @@ def show_date(date):
             if item.time.hour%2==0 and hour-1 not in show_part:
                 hour-=1
             if hour%2==1:
-                show_part.add(hour)
-                sumpart=sum(nutritions)
-                water_factor=(hour-7)/2
-                if hour < 17:
-                    factor=(hour-7)/2
-                    should_part=FoodNutrition(kcal=-needed_kcal_2_hours_till_lunch*factor,
-                            protein=-needed_protein_2_hours_till_lunch*factor, 
-                            carb=0, lipid=0, water=-300*water_factor, fiber=0, sugar=0)
-                elif hour==17:
-                    should_part=FoodNutrition(kcal=-needed_kcal_2_hours_till_lunch*4-lunch_kcal,
-                            protein=-needed_protein_2_hours_till_lunch*4-lunch_protein, 
-                            carb=0, lipid=0, water=-300*water_factor, fiber=0, sugar=0)
-                elif hour>17:
-                    factor=(hour-17)/2
-                    kcal = needed_kcal_2_hours_till_lunch*4+lunch_kcal
-                    kcal += needed_kcal_2_hours_after_lunch*factor
-
-                    protein = needed_protein_2_hours_till_lunch*4+lunch_protein
-                    protein += needed_protein_2_hours_after_lunch*factor
-                    should_part=FoodNutrition(kcal=-kcal,protein=-protein, 
-                            carb=0, lipid=0, water=-300*water_factor, fiber=0, sugar=0)
-                #print ("SUM:", hour)
-                #print("SUM", "{}".format(sumpart))
-                #print("SHOULD", should_part.kcal, should_part.protein)
-                print ("DIF:", hour, ":00", " "*55+"{:diff}".format(should_part+sumpart))
+                display_part(hour, nutritions)
 
 
 
@@ -112,6 +114,17 @@ def show_date(date):
         sumed_lunch = sumed
     missing_kcal = needed_kcal-sumed.kcal
     missing_protein = needed_protein-sumed.protein
+    if item.time.hour < 9:
+        hour=9
+        display_part(hour, nutritions)
+    elif item.time.hour < 21:
+        hour=item.time.hour
+        if hour%2==0 and hour+1 not in show_part:
+            hour+=1
+        elif hour%2==1 and hour+2 not in show_part:
+            hour+=2
+        if hour%2==1:
+            display_part(hour, nutritions)
     print ("SUM:"," "*61+"{}".format(sumed))
     missing_kcal_time = missing_kcal/(hours_to_evening/2) if \
             hours_to_evening > 0 else 0
@@ -125,4 +138,6 @@ def show_date(date):
         #dtstart=datetime.datetime(2017,6,5), count=12)
 #for date in dates:
     #show_date(date)
-show_date(datetime.datetime.now())
+now = datetime.datetime.now()
+yesterday = (now-dateutil.relativedelta.relativedelta(days=1))
+show_date(now)
