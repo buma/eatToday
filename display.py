@@ -97,13 +97,9 @@ def show_date(date):
         #print ("FORMAT:|",item.__format__(""),"|")
         if item.time.hour >= 9 and item.time.hour not in show_part: 
             hour=item.time.hour
-            if item.time.hour%2==0 and hour-1 not in show_part:
-                hour-=1
-            if hour%2==1:
-                display_part(hour, nutritions)
-
-
-
+            for i in range(9,hour+1,2):
+                if i not in show_part:
+                    display_part(i, nutritions)
         print ("{}".format(item))
         if item.nutri_info is not None:
             nutritions.append(item.nutri_info)
@@ -125,6 +121,11 @@ def show_date(date):
             hour+=2
         if hour%2==1:
             display_part(hour, nutritions)
+    for i in range(9,21,2):
+        if i not in show_part:
+        #display_part(i, [FoodNutrition(kcal=0, protein=0, carb=0, water=0,
+            #fiber=0, sugar=0, lipid=0)])
+            display_part(i, nutritions)
     print ("SUM:"," "*61+"{}".format(sumed))
     missing_kcal_time = missing_kcal/(hours_to_evening/2) if \
             hours_to_evening > 0 else 0
