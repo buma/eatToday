@@ -85,11 +85,12 @@ def get_grams(nutrition, item):
                     .one()
             return amount*usda_amount.gramwt/100
         except Exception as a:
-            print ("Guessing weight for ", nutrition.desc, desc)
-            if desc.lower() == "tsp":
-                return amount*0.05
-            if desc.lower() == "tbsp":
-                return amount*14.3/100
+            pass
+    print ("Guessing weight for ", nutrition.desc, desc)
+    if desc.lower() == "tsp":
+        return amount*0.05
+    if desc.lower() == "tbsp":
+        return amount*14.3/100
 
 
 
