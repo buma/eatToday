@@ -1,7 +1,9 @@
 # coding: utf-8
 import datetime
 
-from sqlalchemy import Column, DateTime, Integer, Text, CHAR, Float, ForeignKey
+from sqlalchemy import (
+        Column, DateTime, Integer, Text, CHAR, Float,
+ForeignKey, Boolean )
 from sqlalchemy.orm import relationship
 from sqlalchemy.ext.declarative import declarative_base
 
@@ -23,6 +25,10 @@ class Item(Base):
     description = Column(Text, nullable=True)
     nutrition = Column(Text(length=100), nullable=True)
     calc_nutrition = Column(ForeignKey('foodnutrition.id'))
+    preparing_time = Column(Integer)
+    cooking_time = Column(Integer)
+    eating_time = Column(Integer)
+    prep_supervision = Column(Boolean, server_default="1")
 
     def __init__(self, type, description, nutrition, time=None):
         self.type = type
