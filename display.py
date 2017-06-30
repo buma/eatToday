@@ -175,8 +175,18 @@ def show_date(date):
 
 #dates = dateutil.rrule.rrule(dateutil.rrule.DAILY,
         #dtstart=datetime.datetime(2017,6,5), count=12)
+#dates = dateutil.rrule.rrule(dateutil.rrule.DAILY,
+        #dtstart=datetime.datetime(2017,6,16))
 #for date in dates:
+    #show_part = set()
     #show_date(date)
 now = datetime.datetime.now()
 yesterday = (now-dateutil.relativedelta.relativedelta(days=1))
+show_date(yesterday)
+show_part = set()
 show_date(now)
+show_part = set()
+for i in range(9,22,2):
+    if i not in show_part:
+        display_part(i, [FoodNutrition(kcal=0, protein=0, carb=0, water=0,
+            fiber=0, sugar=0, lipid=0)])
