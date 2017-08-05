@@ -173,6 +173,7 @@ class LocalNutrition(Base):
     fiber = Column(Float)
     sugar = Column(Float)
     calcium = Column(Float)
+    magnesium = Column(Float)
     gramwt1 = Column(Float)
     gramdsc1 = Column(Text(100))
 
