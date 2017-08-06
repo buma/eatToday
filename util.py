@@ -1,7 +1,12 @@
 import itertools
+import re
+
 from sqlalchemy.orm.exc import NoResultFound
 from database import Item, LocalNutrition, LocalNutritionaliase, FoodNutrition
 from gourmet_db import Nutrition, Nutritionaliase, UsdaWeight
+
+
+nondigit = re.compile("(?P<number>[\d\.]+)(?P<desc>\D+)")
 """
     Gets amounts, weird_amounts and types from nutrition string
 
@@ -125,7 +130,7 @@ def calculate_nutrition(nutrition, session):
         for item, value in weird_amounts.items():
             match = nondigit.match(value)
             #print (item, value, match.groups())
-            grams = get_grams(nutritions[item], match.groupdict())
+            grams = get_grams(nutritions[item], match.groupdict(), session)
             if grams:
                 print (value, "->", grams*100, "g")
                 amounts[item]=grams

@@ -5,12 +5,14 @@ from PyQt5.QtCore import *
 from PyQt5.QtGui  import *
 from PyQt5.QtWidgets import (
         QMainWindow,
+        QDialog,
         QCompleter,
         QMessageBox,
         QDialogButtonBox
         )
 
 from ui_input import Ui_MainWindow
+from add import AddDialog
 
 from connectSettings import connectString                                                                                                                        
 import sqlalchemy                                                                                                                                                
@@ -32,6 +34,8 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         self.buttonBox.accepted.connect(self.add_new)
         calc_button = self.buttonBox.addButton("Calculate", QDialogButtonBox.ActionRole)
         calc_button.pressed.connect(self.calculate)
+        add_button = self.buttonBox.addButton("Add", QDialogButtonBox.ActionRole)
+        add_button.pressed.connect(self.add_nutrition)
         self.cb_type.currentTextChanged.connect(self.enable_nutrition)
         engine = sqlalchemy.create_engine(connectString)
         gourmet_engine = \
@@ -136,4 +140,10 @@ class MainWindow(QMainWindow, Ui_MainWindow):
             traceback.print_exc(file=iostream)
             msg.setDetailedText(iostream.getvalue())
             msg.exec_()
+
+    def add_nutrition(self):
+        dialog = AddDialog(self)
+        result = dialog.exec_()
+        if result == QDialog.Accepted:
+            print ("Accepted")
 

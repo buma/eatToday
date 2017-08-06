@@ -214,6 +214,14 @@ class LocalNutrition(Base):
         return "<{} {} {} kcal {} g {}>".format(self.desc, self.ndbno,
                 self.kcal, self.gramwt1, self.gramdsc1)
 
+    def __str__(self):
+        str_out = []
+        for key, value in vars(self).items():
+            if key != "_sa_instance_state":
+                str_out.append("{}: {}".format(key,value))
+        return ",".join(str_out)
+
+
 class LocalNutritionaliase(Base):
     __tablename__ = 'nutritionaliases'
 

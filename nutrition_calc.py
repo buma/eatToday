@@ -1,7 +1,6 @@
 import itertools
 import re
 
-nondigit = re.compile("(?P<number>[\d\.]+)(?P<desc>\D+)")
 from connectSettings import connectString
 
 import sqlalchemy                                                                                                                                                
@@ -9,7 +8,7 @@ from sqlalchemy.orm import sessionmaker
 from sqlalchemy.exc import DBAPIError
 from database import Item, LocalNutrition, LocalNutritionaliase, FoodNutrition
 from gourmet_db import Nutrition, Nutritionaliase, UsdaWeight
-from util import get_amounts, get_nutrition
+from util import get_amounts, get_nutrition, calculate_nutrition
 
 engine = sqlalchemy.create_engine(connectString)
 gourmet_engine = \
