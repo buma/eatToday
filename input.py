@@ -1,7 +1,9 @@
 import itertools
+import io
+import traceback
 from PyQt5.QtCore import *                                                                                                                                       
 from PyQt5.QtGui  import *
-from PyQt5.QtWidgets import QMainWindow, QCompleter
+from PyQt5.QtWidgets import QMainWindow, QCompleter, QMessageBox
 
 from ui_input import Ui_MainWindow
 
@@ -73,14 +75,27 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         nutrition = self.le_nutrition.text() if self.le_nutrition.isEnabled() \
             and len(self.le_nutrition.text()) > 3 \
             else None
-        if nutrition is not None:
-            nutrition = sort_nutrition_string(nutrition)
-        item = Item(description=desc, nutrition=nutrition,
-                time=self.d_edit.dateTime().toPyDateTime(),
-                type=self.cb_type.currentText())
-        self.session.merge(item)
-        print(item)
-        self.session.commit()
-        self.le_description.setText("")
-        self.le_nutrition.setText("")
+        try:
+            if nutrition is not None:
+                nutrition = sort_nutrition_string(nutrition)
+            item = Item(description=desc, nutrition=nutrition,
+                    time=self.d_edit.dateTime().toPyDateTime(),
+                    type=self.cb_type.currentText())
+            self.session.merge(item)
+            print(item)
+            self.session.commit()
+            self.le_description.setText("")
+            self.le_nutrition.setText("")
+        except Exception as e:
+            iostream = io.StringIO();
+            #Shows error dialog:
+            msg = QMessageBox()
+            msg.setIcon(QMessageBox.Critical)
+            msg.setText("It was not possible to save data")
+            msg.setInformativeText("Error: " + str(e))
+            traceback.print_exc(file=iostream)
+            msg.setDetailedText(iostream.getvalue())
+            msg.exec_()
+            
+            
 
