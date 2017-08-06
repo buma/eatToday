@@ -1,9 +1,25 @@
 import itertools
+"""
+    Gets amounts, weird_amounts and types from nutrition string
+
+    Nutrition string is 1kroznik*POLENTA+1tbsp*CVIRKI+1*WATER
+
+    amounts are just float numbers (1 in this example)
+    weird_amounts are descriptive amounts which float value needs to be
+    determined (1kroznik and 1tbsp) in this example
+
+    types are food names (POLENTA, CVIRKI, WATER) in this example
+
+    Return:
+    types are returned lowercase
+
+"""
 def get_amounts(nutrition):
     items = nutrition.split("+")
     amounts = {}
     weird_amounts = {}
     for item in items:
+        #print ("ITEM:|",item,"|")
         amount, type = item.split("*")
         #print ("Amount:{} {}".format(amount, type))
         type = type.strip()
@@ -18,7 +34,8 @@ def get_amounts(nutrition):
     return amounts, weird_amounts, types
 
 """
-Sorts nutrition string based on items
+Sorts nutrition string based on item types (AKA food names)
+And change them in uppercase
 """
 def sort_nutrition_string(nutrition):
     amounts, weird_amounts, types = get_amounts(nutrition)
