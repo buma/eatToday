@@ -5,14 +5,17 @@ from PyQt5.QtCore import *
 from PyQt5.QtGui  import *
 from PyQt5.QtWidgets import (
         QMainWindow,
-        QDialog,
+        QLabel,
+        QFormLayout,
+        QSpinBox,
+        QDoubleSpinBox,
+        QLineEdit,
         QCompleter,
         QMessageBox,
         QDialogButtonBox
         )
 
 from ui_input import Ui_MainWindow
-from add import AddDialog
 
 from connectSettings import connectString                                                                                                                        
 import sqlalchemy                                                                                                                                                
@@ -34,8 +37,6 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         self.buttonBox.accepted.connect(self.add_new)
         calc_button = self.buttonBox.addButton("Calculate", QDialogButtonBox.ActionRole)
         calc_button.pressed.connect(self.calculate)
-        add_button = self.buttonBox.addButton("Add", QDialogButtonBox.ActionRole)
-        add_button.pressed.connect(self.add_nutrition)
         self.cb_type.currentTextChanged.connect(self.enable_nutrition)
         engine = sqlalchemy.create_engine(connectString)
         gourmet_engine = \
@@ -69,6 +70,81 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         self.d_edit.setDateTime(QDateTime.currentDateTime())
         self.cb_type.addItems(["HRANA", "PIPI", "PIJAČA", "STANJE", "ZDRAVILO",
             "KAKA"])
+
+        self.init_add_nutrition()
+
+    def init_add_nutrition(self):
+        self.buttonBox_2.accepted.connect(self.add_new_nutrition)
+        self.buttonBox_2.button(QDialogButtonBox.Reset).clicked.connect(self.reset_add_nutrition)
+        skip = set(["ndbno"])
+        self.unit_g = set(["water", "protein", "lipid", "carb", "fiber", "sugar"])
+        idx = 1
+        self.inputs = {}
+        for c in filter(lambda x: x.name not in skip,
+                LocalNutrition.__table__.columns):
+            label = QLabel(self)
+            label.setObjectName("label_"+c.name)
+            label.setText(c.name)
+            self.formLayout.setWidget(idx, QFormLayout.LabelRole,
+                   label)
+            if c.name == "kcal":
+                le = QDoubleSpinBox(self)
+                le.setMaximum(2000)
+                le.setSuffix("kcal")
+                self.inputs[c.name]=le.value
+            elif "TEXT" in str(c.type):
+                le = QLineEdit(self)
+                self.inputs[c.name]=le.text
+            else:
+                le = QDoubleSpinBox(self)
+                self.inputs[c.name]=le.value
+                if c.name in self.unit_g:
+                    le.setMaximum(100)
+                    le.setSuffix("g")
+                elif c.name == "gramwt1":
+                    le.setSuffix("g")
+                    le.setMaximum(500)
+                else:
+                    le.setSuffix("mg")
+                    le.setMaximum(1000)
+            le.setObjectName("in_"+c.name)
+            self.formLayout.setWidget(idx, QFormLayout.FieldRole, le)
+            idx+=1
+
+    def reset_add_nutrition(self):
+        for widget in self.tab_add_nutrition.findChildren(QLineEdit):
+            widget.clear()
+
+    def add_new_nutrition(self):
+        ingkey = self.in_ingkey.text()
+        mandatory = set("kcal")
+        mandatory = mandatory.union(self.unit_g)
+        line = {}
+        for c in filter(lambda x: x.name != "ndbno",
+                LocalNutrition.__table__.columns):
+            value = self.inputs[c.name]()
+            if c.name not in mandatory and value == 0:
+                value = None
+            if c.name == "gramdsc1" and len(value) <= 3:
+                value = None
+            print(c.name, c.type, value)
+            if value is not None:
+                line[c.name]=value
+        nutri = LocalNutrition(**line)
+        self.session.add(nutri)
+        self.session.flush()
+        print (nutri)
+        alias = LocalNutritionaliase(ingkey=ingkey, ndbno=nutri.ndbno)
+        self.session.add(alias)
+        msg = QMessageBox()
+        msg.setIcon(QMessageBox.Information)
+        msg.setText("Check if everything is OK:")
+        msg.setInformativeText("Nutrition:\n"+str(nutri)+"\nAlias:\n"+repr(alias))
+        msg.setStandardButtons(QMessageBox.Save | QMessageBox.Discard)
+        result = msg.exec_()
+        if result == QMessageBox.Save:
+            print ("Inserting")
+            self.session.commit()
 
 
     def enable_nutrition(self, val):
@@ -140,10 +216,4 @@ class MainWindow(QMainWindow, Ui_MainWindow):
             traceback.print_exc(file=iostream)
             msg.setDetailedText(iostream.getvalue())
             msg.exec_()
-
-    def add_nutrition(self):
-        dialog = AddDialog(self)
-        result = dialog.exec_()
-        if result == QDialog.Accepted:
-            print ("Accepted")
 
