@@ -3,7 +3,7 @@ import datetime
 
 from sqlalchemy import (
         Column, DateTime, Integer, Text, CHAR, Float,
-ForeignKey, Boolean )
+ForeignKey, Boolean, Date )
 from sqlalchemy.orm import relationship
 from sqlalchemy.ext.declarative import declarative_base
 
@@ -235,6 +235,14 @@ class LocalNutritionaliase(Base):
     def __repr__(self):
         return "<{} -> {} ({})>".format(self.ingkey, self.ndbno,
                 self.density_equivalent)
+
+class BestBefore(Base):
+    __tablename__ = 'best_before'
+    id = Column(Integer, primary_key=True)
+    ndbno = Column(ForeignKey('nutrition.ndbno'))
+    time = Column(Date)
+    eaten = Column(Boolean)
+
 
 if __name__ == "__main__":
     from connectSettings import connectString

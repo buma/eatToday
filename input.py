@@ -15,6 +15,15 @@ from PyQt5.QtWidgets import (
         QDialogButtonBox
         )
 
+from PyQt5.QtSql import (
+        QSqlDatabase,
+        QSqlQuery,
+        QSqlRelation,
+        QSqlRelationalDelegate,
+        QSqlRelationalTableModel,
+        QSqlTableModel
+        )
+
 from ui_input import Ui_MainWindow
 
 from connectSettings import connectString                                                                                                                        
@@ -60,6 +69,8 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         model_keys.setStringList(aliases_list)
 
         self.lv_keys.setModel(model_keys)
+#Do we want all nutritions or just local?
+        #self.cb_bb_item.setModel(model_keys)
         self.lv_keys.doubleClicked.connect(self.add_key_to_nutrition)
 
         self.completer = QCompleter()
@@ -72,7 +83,72 @@ class MainWindow(QMainWindow, Ui_MainWindow):
             "KAKA"])
 
         self.init_add_nutrition()
+        self.init_best_before()
 
+    """Initializes Best Before tab"""
+    def init_best_before(self):
+        self.buttonBox_3.button(QDialogButtonBox.SaveAll).clicked.connect(self.update_bb)
+        self.buttonBox_3.button(QDialogButtonBox.Apply).clicked.connect(self.add_bb)
+        self.db = QSqlDatabase.addDatabase('QSQLITE')
+        self.db.setDatabaseName(connectString.replace("sqlite:///", ""))
+        if not self.db.open():
+            QMessageBox.critical(None, "Cannot open database",
+                    "Unable to establish a database connection.\n"
+                "This example needs SQLite support. Please read the Qt SQL "
+                "driver documentation for information how to build it.\n\n"
+                "Click Cancel to exit.",
+                QMessageBox.Cancel)
+            return
+
+        model = QSqlRelationalTableModel()
+        model.setTable("best_before")
+        model.setEditStrategy(QSqlRelationalTableModel.OnManualSubmit)
+
+        model.setRelation(1, QSqlRelation('nutrition', 'ndbno', 'desc'))
+        model.select()
+        self.bb_model = model
+
+        nutri_model = QSqlTableModel()
+        nutri_model.setTable("nutrition")
+        #nutri_model.setRelation(2, QSqlRelation('nutrition', 'ndbno', 'desc'))
+        nutri_model.setEditStrategy(QSqlRelationalTableModel.OnManualSubmit)
+        nutri_model.select()
+        self.cb_bb_item.setModel(nutri_model)
+        self.cb_bb_item.setModelColumn(1)
+
+        self.tv_best_before.setModel(model)
+        self.tv_best_before.setItemDelegate(QSqlRelationalDelegate(self.tv_best_before))
+        self.tv_best_before.show()
+
+    """Updates Best before table"""
+    def update_bb(self):
+        print ("Updating Best Before")
+        if not self.bb_model.submitAll():
+            QMessageBox.error(None, "Couldn't update model",
+                    QMessageBox.Cancel)
+
+    """Adds new data to best before table
+
+    update_bb also needs to be called"""
+    def add_bb(self):
+        print("Adding to BB")
+        ndbno = self.cb_bb_item.model() \
+                .record(self.cb_bb_item.currentIndex()) \
+                .field("ndbno").value()
+        #print ("IDX:", self.cb_bb_item.currentIndex(),
+                #ndbno)
+
+
+        row = self.bb_model.rowCount()
+        self.bb_model.insertRow(row)
+        self.bb_model.setData(self.bb_model.createIndex(row, 1), ndbno,
+                Qt.EditRole)
+        self.bb_model.setData(self.bb_model.createIndex(row, 2),
+                self.de_bb.date(),
+                Qt.EditRole)
+
+
+    """Initializes add tab"""
     def init_add_nutrition(self):
         self.buttonBox_2.accepted.connect(self.add_new_nutrition)
         self.buttonBox_2.button(QDialogButtonBox.Reset).clicked.connect(self.reset_add_nutrition)
