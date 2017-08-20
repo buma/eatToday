@@ -243,6 +243,29 @@ class BestBefore(Base):
     time = Column(Date)
     eaten = Column(Boolean)
 
+class Shop(Base):
+    __tablename__ = 'shop'
+    id = Column(Integer, primary_key=True)
+    name = Column(Text(100))
+
+class Price(Base):
+    __tablename__ = 'price'
+    id = Column(Integer, primary_key=True)
+    ndbno = Column(ForeignKey('nutrition.ndbno'))
+    shop_id = Column(ForeignKey('shop.id'))
+    last_updated = Column(Date)
+#Normal price in a shop
+    price = Column(Float)
+#Mojih 10 Current action etc.
+    lowered_price = Column(Float)
+#Mojih 10 has limited timespan
+    lowered_untill = Column(Date)
+    currency = Column(Text(4))
+    comment = Column(Text(100))
+#Is this price or offer temporary or not (Hofer usually)
+    temporary = Column(Boolean())
+
+
 
 if __name__ == "__main__":
     from connectSettings import connectString
