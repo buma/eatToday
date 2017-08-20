@@ -92,6 +92,8 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         self.init_price()
 
     def init_price(self):
+        self.buttonBox_4.button(QDialogButtonBox.SaveAll).clicked.connect(self.update_price)
+        self.buttonBox_4.button(QDialogButtonBox.Reset).clicked.connect(self.reset_price)
         model = QSqlTableModel()
         model.setTable("shop")
         model.setEditStrategy(QSqlRelationalTableModel.OnManualSubmit)
@@ -104,8 +106,14 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         price_model.setEditStrategy(QSqlRelationalTableModel.OnManualSubmit)
         price_model.setRelation(1, QSqlRelation('nutrition', 'ndbno', 'desc'))
         price_model.setRelation(2, QSqlRelation('shop', 'id', 'name'))
+        price_model.setSort(1, Qt.AscendingOrder)
 
         self.price_model = price_model
+
+        self.price_model.select()
+
+        self.tv_price.setModel(price_model)
+        self.tv_price.setItemDelegate(QSqlRelationalDelegate(self.tv_price))
 
 
 
@@ -124,6 +132,16 @@ class MainWindow(QMainWindow, Ui_MainWindow):
 
         self.de_last_updated.setMaximumDate(QDate.currentDate())
         self.de_last_updated.setDateTime(QDateTime.currentDateTime())
+
+    def update_price(self):
+        print ("Updating price info")
+        if not self.price_model.submitAll():
+            QMessageBox.error(None, "Couldn't update model",
+                    QMessageBox.Cancel)
+
+    def reset_price(self):
+        print ("Resetting price info")
+        self.price_model.revertAll()
 
     """Sets suffix symbols for prices based on currency"""
     def currency_changed(self, currency):
@@ -146,9 +164,12 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         shop_id = self.shop_model.record(self.cb_shop.currentIndex()) \
                 .field("id").value()
         print ("Shop ID:", shop_id, self.cb_shop.currentText())
-        ndbno = self.cb_price_item.model() \
-                .record(self.cb_price_item.currentIndex()) \
-                .field("ndbno").value()
+        record = self.cb_price_item.model() \
+                .record(self.cb_price_item.currentIndex()) 
+        ndbno = record.field("ndbno").value()
+        package_weight = record.field("package_weight").value()
+        slices = record.field("num_of_slices").value()
+
         last_updated = self.de_last_updated.date()
         price = self.dsp_price.value()
         lowered_price = self.dsp_low_price.value() if \
@@ -161,6 +182,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         temporary = self.cb_temporary.isChecked()
 
         print ("ITEM:", self.cb_price_item.currentText(), ndbno)
+        print ("Weight:", package_weight, " Slices: ", slices)
         print ("LU:" , last_updated)
         print ("PRICE:", price, " Low Price:", lowered_price)
         print ("LOWU:" , lowered_untill)
@@ -206,6 +228,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         model = QSqlRelationalTableModel()
         model.setTable("best_before")
         model.setEditStrategy(QSqlRelationalTableModel.OnManualSubmit)
+        model.setSort(2,Qt.AscendingOrder)
 
         model.setRelation(1, QSqlRelation('nutrition', 'ndbno', 'desc'))
         model.select()

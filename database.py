@@ -176,11 +176,16 @@ class LocalNutrition(Base):
     magnesium = Column(Float)
     gramwt1 = Column(Float)
     gramdsc1 = Column(Text(100))
+#Weight of bought package
+    package_weight = Column(Integer)
+#For bread
+    num_of_slices = Column(Integer)
 
     def __add__(self, other):
         together = {}
         skip = set(["ndbno", "desc", "foodgroup", "gramwt1",
             "gramdsc1", "gramwt2", "gramdsc2", "refusepct",
+            "package_weight", "num_of_slices",
             "_sa_instance_state"])
         self_vars = vars(self)
         other_vars = vars(other)
@@ -201,6 +206,7 @@ class LocalNutrition(Base):
         together = {}
         skip = set(["ndbno", "desc", "foodgroup", "gramwt1",
             "gramdsc1", "gramwt2", "gramdsc2", "refusepct",
+            "package_weight", "num_of_slices",
             "_sa_instance_state"])
         self_vars = vars(self)
         for key, value in self_vars.items():
