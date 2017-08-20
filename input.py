@@ -299,6 +299,14 @@ class MainWindow(QMainWindow, Ui_MainWindow):
                 le.setMaximum(2000)
                 le.setSuffix("kcal")
                 self.inputs[c.name]=le.value
+            elif c.name == "package_weight" or c.name == "num_of_slices":
+                le = QSpinBox(self)
+                if c.name == "package_weight":
+                    le.setMaximum(5000)
+                else:
+                    le.setMaximum(20)
+                le.setSuffix("g")
+                self.inputs[c.name]=le.value
             elif "TEXT" in str(c.type):
                 le = QLineEdit(self)
                 self.inputs[c.name]=le.text
