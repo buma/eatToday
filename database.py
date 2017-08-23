@@ -249,10 +249,19 @@ class BestBefore(Base):
     time = Column(Date)
     eaten = Column(Boolean)
 
+    nutrition = relationship('LocalNutrition', backref="best_before")
+
+    def __repr__(self):
+        return "<BB {} ndbno:{}, time:{}, eaten:{}>".format(self.id,\
+                self.ndbno, self.time, self.eaten)
+
 class Shop(Base):
     __tablename__ = 'shop'
     id = Column(Integer, primary_key=True)
     name = Column(Text(100))
+
+    def __repr__(self):
+        return "<Shop {} {}>".format(self.id, self.name)
 
 class Price(Base):
     __tablename__ = 'price'
@@ -271,6 +280,17 @@ class Price(Base):
 #Is this price or offer temporary or not (Hofer usually)
     temporary = Column(Boolean())
 
+    nutrition = relationship('LocalNutrition')
+    shop = relationship('Shop', backref="prices")
+
+    def __repr__(self):
+        out_str = []
+        self_vars = vars(self)
+        for key, value in self_vars.items():
+            if key != "_sa_instance_state" and key != "nutrition":
+                if value is not None:
+                    out_str.append("{}: {}".format(key, value))
+        return "<Price " + ",".join(out_str) + ">"
 
 
 if __name__ == "__main__":
