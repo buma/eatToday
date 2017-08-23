@@ -43,7 +43,7 @@ for (item, items) in itertools.groupby(prices, lambda x: x.nutrition.desc):
 
         print ("  {:2.3f} {} {} {} T:{} {:2.3f} per kg {:2.3f} per kcal".format(price, it.currency, it.last_updated,
             it.shop.name, it.temporary, price_per_kg(price, it), price_per_kcal(price, it)))
-        if it.shop_id == 4 and it.currency == "EUR": #Spar
+        if (it.shop_id == 4 or it.shop_id == 0) and it.currency == "EUR": #Spar
             price = price*0.75
             print ("  {:2.3f} {} {} {} T:{} 25% {:2.3f} per kg {:2.3f} per kcal".format(price, it.currency, it.last_updated,
                 it.shop.name, it.temporary, price_per_kg(price, it), price_per_kcal(price, it)))
