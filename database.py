@@ -292,6 +292,30 @@ class Price(Base):
                     out_str.append("{}: {}".format(key, value))
         return "<Price " + ",".join(out_str) + ">"
 
+class Tag(Base):
+    __tablename__ = 'tag'
+
+    id = Column(Integer, primary_key=True)
+    name = Column(Text(100))
+
+    def __repr__(self):
+        return "<Tag {} {}>".format(self.id, self.name)
+
+class TagItem(Base):
+    __tablename__ = 'tag_item'
+
+    id = Column(Integer, primary_key=True)
+    ndbno = Column(ForeignKey('nutrition.ndbno'))
+    tag_id = Column(ForeignKey('tag.id'))
+
+class TagHierarchy(Base):
+    __tablename__ = 'tag_hierarchy'
+
+    tag_id = Column(ForeignKey('tag.id'), primary_key=True)
+    child_tag_id = Column(ForeignKey('tag.id'), primary_key=True)
+
+
+
 
 if __name__ == "__main__":
     from connectSettings import connectString

@@ -90,6 +90,88 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         self.init_add_nutrition()
         self.init_best_before()
         self.init_price()
+        self.init_tag()
+
+    def init_tag(self):
+
+        self.pb_add_tag.pressed.connect(self.add_tag)
+        self.pb_add_item_tag.pressed.connect(self.add_item_tag)
+        self.pb_add_hier.pressed.connect(self.add_hier)
+        self.pb_save_hier.pressed.connect(self.save_hier)
+        self.pb_save_tag_item.pressed.connect(self.save_tag_item)
+
+
+        tag_model = QSqlTableModel()
+        tag_model.setTable("tag")
+        tag_model.setEditStrategy(QSqlTableModel.OnRowChange)
+        tag_model.setSort(1, Qt.AscendingOrder)
+        tag_model.select()
+
+        tag_item_model = QSqlRelationalTableModel()
+        tag_item_model.setTable("tag_item")
+        #tag_item_model.setRelation(1, QSqlRelation('nutrition', 'ndbno', 'desc'))
+        #tag_item_model.setRelation(2, QSqlRelation('tag', 'id', 'name'))
+        tag_item_model.setEditStrategy(QSqlTableModel.OnManualSubmit)
+        #tag_item_model.select()
+
+        self.tag_item_model = tag_item_model
+
+        tag_hier_model = QSqlRelationalTableModel()
+        tag_hier_model.setTable("tag_hierarchy")
+        tag_hier_model.setRelation(0, QSqlRelation('tag', 'id', 'name'))
+        tag_hier_model.setRelation(1, QSqlRelation('tag', 'id', 'name'))
+        tag_hier_model.setSort(0, Qt.AscendingOrder)
+        tag_hier_model.setEditStrategy(QSqlTableModel.OnManualSubmit)
+        tag_hier_model.select()
+
+        self.tv_tag.setModel(tag_model)
+        #self.tv_tag_item.setModel(tag_item_model)
+        self.tv_tag_hierarchy.setModel(tag_hier_model)
+        self.lv_tag.setModel(tag_model)
+        self.lv_tag.setModelColumn(1)
+
+        #self.tv_tag_item.setItemDelegate(QSqlRelationalDelegate(self.tv_tag_item))
+        self.tv_tag_hierarchy.setItemDelegate(QSqlRelationalDelegate(self.tv_tag_hierarchy))
+
+    def add_tag(self):
+        print ("Adding tag:")
+        row = self.tv_tag.model().rowCount()
+        self.tv_tag.model().insertRow(row)
+    
+    def add_hier(self):
+        print ("Adding hier:")
+        row = self.tv_tag_hierarchy.model().rowCount()
+        self.tv_tag_hierarchy.model().insertRow(row)
+
+    def add_item_tag(self):
+        print ("Adding item_tag:")
+        row = self.tv_tag_item.model().rowCount()
+        self.tv_tag_item.model().insertRow(row)
+
+    def save_hier(self):
+        print ("Saving hier")
+        self.tv_tag_hierarchy.model().submitAll()
+
+    def save_tag_item(self):
+        print ("Saving tag item")
+        ndbno = self.cb_item_tag.model() \
+                .record(self.cb_item_tag.currentIndex()) \
+                .field("ndbno").value()
+        print ("Item:", self.cb_item_tag.currentText(), ndbno)
+        for index in self.lv_tag.selectedIndexes():
+            row = self.tag_item_model.rowCount()
+            record =self.lv_tag.model().record(index.row()) 
+            self.tag_item_model.insertRow(row)
+            self.tag_item_model.setData(self.tag_item_model.createIndex(row,
+                1), ndbno, Qt.EditRole)
+            self.tag_item_model.setData(self.tag_item_model.createIndex(row,
+                2), record.field("id").value(), Qt.EditRole)
+            print (record.field("name").value(), record.field("id").value())
+        #self.tv_tag_item.model().submitAll()
+        if not self.tag_item_model.submitAll():
+            QMessageBox.error(None, "Couldn't update model",
+                    QMessageBox.Cancel)
+
 
     def init_price(self):
         self.buttonBox_4.button(QDialogButtonBox.SaveAll).clicked.connect(self.update_price)
@@ -250,6 +332,9 @@ class MainWindow(QMainWindow, Ui_MainWindow):
 #From Price
         self.cb_price_item.setModel(nutri_model)
         self.cb_price_item.setModelColumn(1)
+#From Tag
+        self.cb_item_tag.setModel(nutri_model)
+        self.cb_item_tag.setModelColumn(1)
 
     """Updates Best before table"""
     def update_bb(self):
