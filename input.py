@@ -66,17 +66,27 @@ class MainWindow(QMainWindow, Ui_MainWindow):
             })
         self.session = Session()
 
+        self.init_db()
+
         model_keys = QStringListModel()
         aliases = itertools.chain(self.session \
-                .query(LocalNutritionaliase.ingkey),
-                self.session.query(Nutritionaliase.ingkey))
-        aliases_list = sorted(x[0].upper() for x in aliases)
-        model_keys.setStringList(aliases_list)
+                .query(LocalNutritionaliase.ingkey, LocalNutritionaliase.ndbno),
+                self.session.query(Nutritionaliase.ingkey,
+                    Nutritionaliase.ndbno))
+        self.aliases_list = sorted((x[0].upper(), x[1]) for x in aliases)
+        for alias in self.aliases_list:
+            if model_keys.insertRow(model_keys.rowCount()):
+                row = model_keys.rowCount()-1
+                #print (alias[1], alias[0])
+                model_keys.setData(model_keys.createIndex(row, 0), alias[0],
+                        Qt.EditRole)
+
 
         self.lv_keys.setModel(model_keys)
 #Do we want all nutritions or just local?
         #self.cb_bb_item.setModel(model_keys)
         self.lv_keys.doubleClicked.connect(self.add_key_to_nutrition)
+        self.lv_keys.clicked.connect(self.show_usda)
 
         self.completer = QCompleter()
         self.le_description.setCompleter(self.completer)
@@ -291,11 +301,8 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         add_data(9, temporary)
         self.price_model.submitAll()
 
-
-    """Initializes Best Before tab"""
-    def init_best_before(self):
-        self.buttonBox_3.button(QDialogButtonBox.SaveAll).clicked.connect(self.update_bb)
-        self.buttonBox_3.button(QDialogButtonBox.Apply).clicked.connect(self.add_bb)
+    """Initializes Qt DB connection"""
+    def init_db(self):
         self.db = QSqlDatabase.addDatabase('QSQLITE')
         self.db.setDatabaseName(connectString.replace("sqlite:///", ""))
         if not self.db.open():
@@ -306,6 +313,12 @@ class MainWindow(QMainWindow, Ui_MainWindow):
                 "Click Cancel to exit.",
                 QMessageBox.Cancel)
             return
+
+
+    """Initializes Best Before tab"""
+    def init_best_before(self):
+        self.buttonBox_3.button(QDialogButtonBox.SaveAll).clicked.connect(self.update_bb)
+        self.buttonBox_3.button(QDialogButtonBox.Apply).clicked.connect(self.add_bb)
 
         model = QSqlRelationalTableModel()
         model.setTable("best_before")
@@ -458,6 +471,48 @@ class MainWindow(QMainWindow, Ui_MainWindow):
     def add_key_to_nutrition(self, model_index):
         if self.le_nutrition.isEnabled():
             self.le_nutrition.insert(model_index.data())
+
+    def show_usda(self, model_index):
+        if self.le_nutrition.isEnabled():
+            #record = self.lv_keys.model() \
+                    #.record(model_index.row()) 
+
+            #ndbno = record.field(0).value()
+            ndbno = self.aliases_list[model_index.row()][1]
+            status = "Units:"
+            units = []
+#Gourmet data:
+            if ndbno < 100000:
+                nutrition = self.session.query(Nutrition.gramdsc1,
+                        Nutrition.gramdsc2) \
+                        .filter(Nutrition.ndbno==ndbno) \
+                        .one()
+                gramdsc1 = nutrition.gramdsc1
+                gramdsc2 = nutrition.gramdsc2
+                usda_amounts = self.session.query(UsdaWeight.unit) \
+                        .filter(UsdaWeight.ndbno==ndbno) 
+                for usda_amount in usda_amounts:
+                    units.append(usda_amount[0])
+#Local data
+            else:
+                nutrition = self.session.query(LocalNutrition.gramdsc1) \
+                        .filter(LocalNutrition.ndbno==ndbno) \
+                        .one()
+                gramdsc1 = nutrition.gramdsc1
+                gramdsc2 = None
+            #gramdsc1 = record.field("gramdsc1").value()
+            #gramdsc2 = record.field("gramdsc2").value()
+            #print ("NDBNO:", ndbno)
+            if gramdsc1 is not None:
+                units.append(gramdsc1)
+            if gramdsc2 is not None:
+                units.append(gramdsc2)
+            units.sort()
+            if units:
+                status+=", ".join(units)
+                self.statusbar.showMessage(status)
+            else:
+                self.statusbar.clearMessage()
 
 
     #@pyqtSlot("")
