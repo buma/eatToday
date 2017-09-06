@@ -21,7 +21,8 @@ from PyQt5.QtSql import (
         QSqlRelation,
         QSqlRelationalDelegate,
         QSqlRelationalTableModel,
-        QSqlTableModel
+        QSqlTableModel,
+        QSqlQueryModel
         )
 
 from ui_input import Ui_MainWindow
@@ -30,7 +31,9 @@ from connectSettings import connectString
 import sqlalchemy                                                                                                                                                
 from sqlalchemy.orm import sessionmaker                                                                                                                          
 from sqlalchemy.exc import DBAPIError   
-from database import Item, LocalNutrition, LocalNutritionaliase, FoodNutrition
+from database import (
+        Item, LocalNutrition, LocalNutritionaliase, FoodNutrition,
+        Tag, TagItem)
 from gourmet_db import Nutrition, Nutritionaliase, UsdaWeight
 from util import sort_nutrition_string, calculate_nutrition
 
@@ -52,6 +55,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         calc_button = self.buttonBox.addButton("Calculate", QDialogButtonBox.ActionRole)
         calc_button.pressed.connect(self.calculate)
         self.cb_type.currentTextChanged.connect(self.enable_nutrition)
+        self.cb_usda.stateChanged.connect(self.enable_usda)
         engine = sqlalchemy.create_engine(connectString)
         gourmet_engine = \
                 sqlalchemy.create_engine("sqlite:////home/mabu/.gourmet/recipes_copy.db")
@@ -69,17 +73,14 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         self.init_db()
 
         model_keys = QStringListModel()
-        aliases = itertools.chain(self.session \
-                .query(LocalNutritionaliase.ingkey, LocalNutritionaliase.ndbno),
-                self.session.query(Nutritionaliase.ingkey,
-                    Nutritionaliase.ndbno))
-        self.aliases_list = sorted((x[0].upper(), x[1]) for x in aliases)
-        for alias in self.aliases_list:
-            if model_keys.insertRow(model_keys.rowCount()):
-                row = model_keys.rowCount()-1
-                #print (alias[1], alias[0])
-                model_keys.setData(model_keys.createIndex(row, 0), alias[0],
-                        Qt.EditRole)
+        self.local_nutri_query = self.session \
+                .query(LocalNutritionaliase.ingkey, LocalNutritionaliase.ndbno)
+        self.nutri_query = self.session.query(Nutritionaliase.ingkey, \
+                    Nutritionaliase.ndbno)
+        self.filtered_local = self.local_nutri_query
+        self.filtered = self.nutri_query
+        self.update_lv_keys(self.local_nutri_query, self.nutri_query,
+                model_keys)
 
 
         self.lv_keys.setModel(model_keys)
@@ -97,10 +98,39 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         self.cb_type.addItems(["HRANA", "PIPI", "PIJAČA", "STANJE", "ZDRAVILO",
             "KAKA"])
 
+        self.cb_tag_select.currentIndexChanged.connect(self.filter_add_nutrition)
+
         self.init_add_nutrition()
         self.init_best_before()
         self.init_price()
         self.init_tag()
+
+    def enable_usda(self, state):
+        if state==Qt.Checked:
+            self.filtered = self.nutri_query
+        else:
+            self.filtered = []
+        self.update_lv_keys(self.filtered_local, self.filtered,
+                self.lv_keys.model())
+
+    def update_lv_keys(self, local_nutri_query, nutri_query, model_keys):
+        aliases = itertools.chain(local_nutri_query, nutri_query)
+        self.aliases_list = sorted((x[0].upper(), x[1]) for x in aliases)
+        model_keys.setStringList([x[0] for x in self.aliases_list])
+
+    def filter_add_nutrition(self, model_index):
+        record = self.cb_tag_select.model().record(model_index) 
+        print (record.field("id").value(), record.field("name").value())
+        id = record.field("id").value()
+        if id == 0:
+            self.filtered_local = self.local_nutri_query
+        else:
+            self.filtered_local = self.local_nutri_query \
+                    .join(LocalNutrition) \
+                    .join(TagItem) \
+                    .filter(TagItem.tag_id==id)
+        self.update_lv_keys(self.filtered_local, self.filtered,
+                self.lv_keys.model())
 
     def init_tag(self):
 
@@ -133,6 +163,10 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         tag_hier_model.setSort(0, Qt.AscendingOrder)
         tag_hier_model.setEditStrategy(QSqlTableModel.OnManualSubmit)
         tag_hier_model.select()
+
+#From add food
+        self.cb_tag_select.setModel(tag_model)
+        self.cb_tag_select.setModelColumn(1)
 
         self.tv_tag.setModel(tag_model)
         #self.tv_tag_item.setModel(tag_item_model)
@@ -508,10 +542,14 @@ class MainWindow(QMainWindow, Ui_MainWindow):
             if gramdsc2 is not None:
                 units.append(gramdsc2)
             units.sort()
-            if units:
-                status+=", ".join(units)
-                self.statusbar.showMessage(status)
-            else:
+            try:
+                if units:
+                    status+=", ".join(units)
+                    self.statusbar.showMessage(status)
+                else:
+                    self.statusbar.clearMessage()
+            except Exception as a:
+                print ("Problem with units:", units)
                 self.statusbar.clearMessage()
 
 
