@@ -3,6 +3,8 @@ import datetime
 import re
 from collections import Counter
 
+from tabulate import tabulate
+
 import dateutil.rrule
 import dateutil.relativedelta
 import sqlalchemy                                                                                                                                                
@@ -77,12 +79,32 @@ for food_item in items:
         for food, amount in weird_amounts.items():
             weirds[food]=amount
 
+for food_item, value in specific_weights.items():
+    if food_item in all_nutritions:
+        print ("Have ", food_item)
+        if isinstance(value, str):
+            match = nondigit.match(value)
+            print (item, value, match.groups())
+            grams = get_grams(all_nutritions[food_item], match.groupdict(), session)
+            if grams:
+                package_weight[food_item]=grams*100
+        else:
+            package_weight[food_item]=value
+    else:
+        print (food_item, "not in ", all_nutritions.keys())
+
+
+
 print ("{} - {}".format(week_before, now))
+headers = ["INGKEY", "weight", "packages"]
+table = []
 for amount, value in sumu.most_common():
     packages = 0
     if amount in package_weight:
         packages = value*100/package_weight[amount]
-    print (amount, value*100, "g", packages)
+        #packages = package_weight[amount]
+    table.append([amount, value*100, packages])
+print (tabulate(table, headers=headers))
 #print ("Weirds:")
 #for amount, value in weirds.items():
     #print (amount, value)
