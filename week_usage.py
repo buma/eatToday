@@ -46,12 +46,20 @@ all_nutritions = {}
 #TODO set weight for irregular items (banana, hrenovke, potato), add prices,
 #kcal etc
 package_weight = {}
+specific_weights = {
+        "EGG":"1medium",
+        "HRENOVKA":"2par",
+        "BANANA":"1medium",
+        }
+
 for food_item in items:
     #print (food_item)
     amounts, weird_amounts, types = get_amounts(food_item.nutrition)
     for food, amount in amounts.items():
         sumu[food]+=amount
     nutritions = get_nutrition_for(types, session)
+    if not nutritions:
+        continue
     for nutrition, v in filter(lambda x: isinstance(x[1],LocalNutrition),
             nutritions.items()):
         if v.package_weight is not None:
