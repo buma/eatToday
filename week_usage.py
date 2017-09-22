@@ -18,6 +18,8 @@ from connectSettings import connectString
 
 from util import get_amounts, get_grams, get_nutrition_for
 nondigit = re.compile("(?P<number>[\d\.]+)(?P<desc>\D+)")
+LAST_MONDAY = dateutil.relativedelta.relativedelta(
+        weekday=dateutil.relativedelta.MO(-1))
 
 engine = sqlalchemy.create_engine(connectString)
 gourmet_engine = \
@@ -35,7 +37,8 @@ Session.configure(binds={Item: engine,
 
 session = Session() 
 now = datetime.datetime.now()
-week_before =  (now-dateutil.relativedelta.relativedelta(days=3))
+now = (now+dateutil.relativedelta.relativedelta(days=1))
+week_before =  (now+LAST_MONDAY)
 items = session.query(Item) \
         .filter(Item.time.between(week_before.date(), now.date())) \
         .filter(Item.type.in_(["HRANA", "PIJAČA"])) \
