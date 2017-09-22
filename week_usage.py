@@ -37,6 +37,7 @@ Session.configure(binds={Item: engine,
 
 session = Session() 
 now = datetime.datetime.now()
+START_OF_MONTH=now.replace(day=1)
 now = (now+dateutil.relativedelta.relativedelta(days=1))
 week_before =  (now+LAST_MONDAY)
 items = session.query(Item) \
