@@ -71,23 +71,20 @@ class MainWindow(QMainWindow, Ui_MainWindow):
 
         self.init_db()
 
-        model_keys = QStringListModel()
         self.local_nutri_query = self.session \
-                .query(LocalNutritionaliase.ingkey, LocalNutritionaliase.ndbno)
-        self.filtered_local = self.local_nutri_query
-        self.update_lv_keys(self.local_nutri_query,
-                model_keys)
+                .query(LocalNutritionaliase.ndbno)
+        self.filters = []
 
-        nutri_model = QSqlQueryModel()
-        nutri_model.setQuery("SELECT nutritionaliases.ingkey AS ingkey," +
-                " nutrition.desc as desc, nutrition.ndbno as ndbno," +
-                " nutrition.gramdsc1 as gramdsc1 " +
-                " FROM nutrition " +
-                " JOIN nutritionaliases " +
-                " ON nutrition.ndbno = nutritionaliases.ndbno" +
-                " ORDER BY ingkey")
+        nutri_model = QSqlRelationalTableModel()
+        nutri_model.setTable("nutrition")
+        nutri_model.setRelation(0, QSqlRelation('nutritionaliases', 'ndbno',
+            'ingkey'))
+        nutri_model.setSort(0, Qt.AscendingOrder)
+        nutri_model.select()
+        #print (nutri_model.selectStatement())
 
-        self.lv_keys.setModel(model_keys)
+        self.lv_keys.setModel(nutri_model)
+        self.update_lv_keys()
 #Do we want all nutritions or just local?
         #self.cb_bb_item.setModel(model_keys)
         self.lv_keys.doubleClicked.connect(self.add_key_to_nutrition)
@@ -110,34 +107,43 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         self.init_tag()
 
     def enable_usda(self, state):
-        pass
-        #if state==Qt.Checked:
-            #self.filtered_local = self.local_nutri_query
-        #else:
-            #self.filtered = \
-            #self.local_nutri_query.filter(LocalNutritionaliase.nutrition.source
-                    #!= "USDA")
-        #self.update_lv_keys(self.filtered_local,
-                #self.lv_keys.model())
+        if state==Qt.Checked:
+#Remove filter with USDA in it
+            self.filters = list(filter(lambda x: 'USDA' not in x, self.filters))
+        else:
+            self.filters.append("source!='USDA'")
+        self.update_lv_keys()
 
-    def update_lv_keys(self, local_nutri_query, model_keys):
-        aliases = local_nutri_query
-        self.aliases_list = sorted((x[0], x[1]) for x in aliases)
-        model_keys.setStringList([x[0] for x in self.aliases_list])
+    def update_lv_keys(self):
+        #print ("FILTER:", self.filters)
+        model_keys = self.lv_keys.model()
+        if self.filters:
+            filter = " AND ".join(self.filters)
+            model_keys.setFilter(filter)
+        else:
+            model_keys.setFilter(None)
+        #print ("Filters:", model_keys.filter(), model_keys.selectStatement())
 
     def filter_add_nutrition(self, model_index):
         record = self.cb_tag_select.model().record(model_index) 
         print (record.field("id").value(), record.field("name").value())
         id = record.field("id").value()
+#Remove filter with IN in it
+        self.filters = list(filter(lambda x: 'IN' not in x, self.filters))
         if id == 0:
-            self.filtered_local = self.local_nutri_query
+            pass
         else:
-            self.filtered_local = self.local_nutri_query \
+            filtered_local = self.local_nutri_query \
                     .join(LocalNutrition) \
                     .join(TagItem) \
                     .filter(TagItem.tag_id==id)
-        self.update_lv_keys(self.filtered_local, 
-                self.lv_keys.model())
+            fids = []
+            for fid in filtered_local:
+                fids.append(fid.ndbno)
+            if fids:
+                self.filters.append("nutrition.ndbno IN ("+",".join([str(x) for x in
+                    fids])+")")
+        self.update_lv_keys()
 
     def init_tag(self):
 
