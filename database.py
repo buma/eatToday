@@ -307,6 +307,9 @@ class TagItem(Base):
     id = Column(Integer, primary_key=True)
     ndbno = Column(ForeignKey('nutrition.ndbno'))
     tag_id = Column(ForeignKey('tag.id'))
+    
+    nutrition = relationship('LocalNutrition')
+    tag = relationship('Tag')
 
 class TagHierarchy(Base):
     __tablename__ = 'tag_hierarchy'
