@@ -25,7 +25,7 @@ Session = sessionmaker(bind=engine)
 
 session = Session() 
 
-weight = 64 #6:54 20.6 7:42 21.6 63
+weight = 66 #6:54 20.6 7:42 21.6 63 24.7 66
 needed_kcal = 2200
 needed_kcal_lunch = 1300
 #First number are actual calories of lunch
@@ -79,6 +79,9 @@ show_part = set()
 def display_part(hour, nutritions):
     show_part.add(hour)
     sumpart=sum(nutritions)
+    if not nutritions:
+        print ("nutritions empty")
+        return
     water_factor=(hour-7)/2
     if hour < 17:
         factor=(hour-7)/2
@@ -113,6 +116,7 @@ def show_date(date):
             .options(joinedload(Item.nutri_info)) \
             .filter(Item.time.between(today, tomorow)) \
             .order_by(Item.time)
+            #.filter(Item.type.in_(["HRANA", "STANJE"])) \
 #items = session.query(Item).filter(Item.id==274)
 
     now = datetime.datetime.now()
@@ -143,6 +147,9 @@ def show_date(date):
             nutritions.append(item.nutri_info)
             if sumed_lunch is None and item.time.hour >= 15:
                 sumed_lunch = sum(nutritions)
+    if not nutritions:
+        print ("nutritions empty")
+        return
     sumed = (sum(nutritions))
     if sumed_lunch is None:
         sumed_lunch = sumed
