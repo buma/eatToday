@@ -33,8 +33,7 @@ from sqlalchemy.orm import sessionmaker
 from sqlalchemy.exc import DBAPIError   
 from database import (
         Item, LocalNutrition, LocalNutritionaliase, FoodNutrition,
-        Tag, TagItem)
-from gourmet_db import Nutrition, Nutritionaliase, UsdaWeight
+        Tag, TagItem, UsdaWeight)
 from util import sort_nutrition_string, calculate_nutrition
 
 class MainWindow(QMainWindow, Ui_MainWindow):
@@ -61,12 +60,12 @@ class MainWindow(QMainWindow, Ui_MainWindow):
                 sqlalchemy.create_engine("sqlite:////home/mabu/.gourmet/recipes_copy.db")
         Session = sessionmaker()
         Session.configure(binds={Item: engine,
-                Nutrition: gourmet_engine,
-                Nutritionaliase: gourmet_engine,
+                #Nutrition: gourmet_engine,
+                #Nutritionaliase: gourmet_engine,
                 LocalNutrition: engine,
                 LocalNutritionaliase: engine,
                 FoodNutrition: engine,
-                UsdaWeight: gourmet_engine
+                UsdaWeight: engine
             })
         self.session = Session()
 
@@ -75,11 +74,8 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         model_keys = QStringListModel()
         self.local_nutri_query = self.session \
                 .query(LocalNutritionaliase.ingkey, LocalNutritionaliase.ndbno)
-        self.nutri_query = self.session.query(Nutritionaliase.ingkey, \
-                    Nutritionaliase.ndbno)
         self.filtered_local = self.local_nutri_query
-        self.filtered = self.nutri_query
-        self.update_lv_keys(self.local_nutri_query, self.nutri_query,
+        self.update_lv_keys(self.local_nutri_query,
                 model_keys)
 
         nutri_model = QSqlQueryModel()
@@ -114,16 +110,19 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         self.init_tag()
 
     def enable_usda(self, state):
-        if state==Qt.Checked:
-            self.filtered = self.nutri_query
-        else:
-            self.filtered = []
-        self.update_lv_keys(self.filtered_local, self.filtered,
-                self.lv_keys.model())
+        pass
+        #if state==Qt.Checked:
+            #self.filtered_local = self.local_nutri_query
+        #else:
+            #self.filtered = \
+            #self.local_nutri_query.filter(LocalNutritionaliase.nutrition.source
+                    #!= "USDA")
+        #self.update_lv_keys(self.filtered_local,
+                #self.lv_keys.model())
 
-    def update_lv_keys(self, local_nutri_query, nutri_query, model_keys):
-        aliases = itertools.chain(local_nutri_query, nutri_query)
-        self.aliases_list = sorted((x[0].upper(), x[1]) for x in aliases)
+    def update_lv_keys(self, local_nutri_query, model_keys):
+        aliases = local_nutri_query
+        self.aliases_list = sorted((x[0], x[1]) for x in aliases)
         model_keys.setStringList([x[0] for x in self.aliases_list])
 
     def filter_add_nutrition(self, model_index):
@@ -137,7 +136,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
                     .join(LocalNutrition) \
                     .join(TagItem) \
                     .filter(TagItem.tag_id==id)
-        self.update_lv_keys(self.filtered_local, self.filtered,
+        self.update_lv_keys(self.filtered_local, 
                 self.lv_keys.model())
 
     def init_tag(self):
@@ -523,25 +522,16 @@ class MainWindow(QMainWindow, Ui_MainWindow):
             ndbno = self.aliases_list[model_index.row()][1]
             status = "Units:"
             units = []
-#Gourmet data:
-            if ndbno < 100000:
-                nutrition = self.session.query(Nutrition.gramdsc1,
-                        Nutrition.gramdsc2) \
-                        .filter(Nutrition.ndbno==ndbno) \
-                        .one()
-                gramdsc1 = nutrition.gramdsc1
-                gramdsc2 = nutrition.gramdsc2
-                usda_amounts = self.session.query(UsdaWeight.unit) \
-                        .filter(UsdaWeight.ndbno==ndbno) 
-                for usda_amount in usda_amounts:
-                    units.append(usda_amount[0])
-#Local data
-            else:
-                nutrition = self.session.query(LocalNutrition.gramdsc1) \
-                        .filter(LocalNutrition.ndbno==ndbno) \
-                        .one()
-                gramdsc1 = nutrition.gramdsc1
-                gramdsc2 = None
+            nutrition = self.session.query(LocalNutrition.gramdsc1,
+                    LocalNutrition.gramdsc2) \
+                    .filter(LocalNutrition.ndbno==ndbno) \
+                    .one()
+            gramdsc1 = nutrition.gramdsc1
+            gramdsc2 = nutrition.gramdsc2
+            usda_amounts = self.session.query(UsdaWeight.unit) \
+                    .filter(UsdaWeight.ndbno==ndbno) 
+            for usda_amount in usda_amounts:
+                units.append(usda_amount[0])
             #gramdsc1 = record.field("gramdsc1").value()
             #gramdsc2 = record.field("gramdsc2").value()
             #print ("NDBNO:", ndbno)

@@ -169,13 +169,54 @@ class LocalNutrition(Base):
     kcal = Column(Float)
     protein = Column(Float)
     lipid = Column(Float)
+    ash = Column(Float)
     carb = Column(Float)
-    fiber = Column(Float)
     sugar = Column(Float)
+    fiber = Column(Float)
     calcium = Column(Float)
+    iron = Column(Float)
     magnesium = Column(Float)
+    phosphorus = Column(Float)
+    potassium = Column(Float)
+    sodium = Column(Float)
+    zinc = Column(Float)
+    copper = Column(Float)
+    manganese = Column(Float)
+    selenium = Column(Float)
+    vitaminc = Column(Float)
+    thiamin = Column(Float)
+    riboflavin = Column(Float)
+    niacin = Column(Float)
+    pantoacid = Column(Float)
+    vitaminb6 = Column(Float)
+    folatetotal = Column(Float)
+    folateacid = Column(Float)
+    foodfolate = Column(Float)
+    folatedfe = Column(Float)
+    choline = Column(Float)
+    vitb12 = Column(Float)
+    vitaiu = Column(Float)
+    vitarae = Column(Float)
+    retinol = Column(Float)
+    alphac = Column(Float)
+    betac = Column(Float)
+    betacrypt = Column(Float)
+    lypocene = Column(Float)
+    lutzea = Column(Float)
+    vite = Column(Float)
+    vitk = Column(Float)
+    fasat = Column(Float)
+    famono = Column(Float)
+    fapoly = Column(Float)
+    cholestrl = Column(Float)
     gramwt1 = Column(Float)
     gramdsc1 = Column(Text(100))
+    gramwt2 = Column(Float)
+    gramdsc2 = Column(Text(100))
+    refusepct = Column(Float)
+    foodgroup = Column(Text)
+#From where nutri data comes USDA/label
+    source = Column(Text(10))
 #Weight of bought package
     package_weight = Column(Integer)
 #For bread
@@ -185,7 +226,7 @@ class LocalNutrition(Base):
         together = {}
         skip = set(["ndbno", "desc", "foodgroup", "gramwt1",
             "gramdsc1", "gramwt2", "gramdsc2", "refusepct",
-            "package_weight", "num_of_slices",
+            "package_weight", "num_of_slices", "source",
             "_sa_instance_state"])
         self_vars = vars(self)
         other_vars = vars(other)
@@ -206,7 +247,7 @@ class LocalNutrition(Base):
         together = {}
         skip = set(["ndbno", "desc", "foodgroup", "gramwt1",
             "gramdsc1", "gramwt2", "gramdsc2", "refusepct",
-            "package_weight", "num_of_slices",
+            "package_weight", "num_of_slices", "source",
             "_sa_instance_state"])
         self_vars = vars(self)
         for key, value in self_vars.items():
@@ -316,6 +357,18 @@ class TagHierarchy(Base):
 
     tag_id = Column(ForeignKey('tag.id'), primary_key=True)
     child_tag_id = Column(ForeignKey('tag.id'), primary_key=True)
+
+class UsdaWeight(Base):
+    __tablename__ = 'usda_weights'
+
+    id = Column(Integer, primary_key=True)
+    ndbno = Column(Integer)
+    seq = Column(Float)
+    amount = Column(Float)
+    unit = Column(Text(80))
+    gramwt = Column(Float)
+    ndata = Column(Integer)
+    stdev = Column(Float)
 
 
 
