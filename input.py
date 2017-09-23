@@ -75,8 +75,13 @@ class MainWindow(QMainWindow, Ui_MainWindow):
                 .query(LocalNutritionaliase.ndbno)
         self.filters = []
 
+        eating_model = QSqlTableModel()
+        eating_model.setTable("eat")
+        eating_model.select()
+
         nutri_model = QSqlRelationalTableModel()
         nutri_model.setTable("nutrition")
+        #nutri_model.fieldIndex("ndbno")
         nutri_model.setRelation(0, QSqlRelation('nutritionaliases', 'ndbno',
             'ingkey'))
         nutri_model.setSort(0, Qt.AscendingOrder)
@@ -92,8 +97,8 @@ class MainWindow(QMainWindow, Ui_MainWindow):
 
         self.completer = QCompleter()
         self.le_description.setCompleter(self.completer)
-        self.model = QStringListModel()
-        self.completer.setModel(self.model)
+        self.completer.setModel(eating_model)
+        self.completer.setCompletionColumn(3)
 
         self.d_edit.setDateTime(QDateTime.currentDateTime())
         self.cb_type.addItems(["HRANA", "PIPI", "PIJAČA", "STANJE", "ZDRAVILO",
@@ -508,12 +513,15 @@ class MainWindow(QMainWindow, Ui_MainWindow):
 
 
     def enable_nutrition(self, val):
+        #FIXME: this doesn't filter types currently
         is_nutrition = val == "HRANA" or val == "PIJAČA"
         self.le_nutrition.setEnabled(is_nutrition)
         self.lv_keys.setEnabled(is_nutrition)
         self.model_data = self.session.query(Item.description.distinct()).filter(Item.type==self.cb_type.currentText())
+        #self.le_description.completer().model().setFilter("type="+self.cb_type.currentText())
+        #print (self.le_description.completer().model().selecStatement())
         items = (x[0] for x in self.model_data.all())
-        self.model.setStringList(items)
+        #self.model.setStringList(items)
 
     def add_key_to_nutrition(self, model_index):
         if self.le_nutrition.isEnabled():
@@ -521,11 +529,15 @@ class MainWindow(QMainWindow, Ui_MainWindow):
 
     def show_usda(self, model_index):
         if self.le_nutrition.isEnabled():
-            #record = self.lv_keys.model() \
-                    #.record(model_index.row()) 
-
-            #ndbno = record.field(0).value()
-            ndbno = self.aliases_list[model_index.row()][1]
+#Selected nutrition record
+            record = self.lv_keys.model() \
+                    .record(model_index.row()) 
+            ingkey = record.field(0).value()
+#Nutritionaliases table
+            relation_model = self.lv_keys.model().relationModel(0)
+#Selects ingkey selected in list in nutritionaliases table
+            relation_model.setFilter("ingkey='"+ingkey+"'")
+            ndbno = relation_model.data(relation_model.index(0,2))
             status = "Units:"
             units = []
             nutrition = self.session.query(LocalNutrition.gramdsc1,
@@ -559,6 +571,12 @@ class MainWindow(QMainWindow, Ui_MainWindow):
 
     #@pyqtSlot("")
     def add_new(self):
+        model = self.le_description.completer().model()
+        row = model.rowCount()
+        model.insertRow(row)
+        def add_data(idx, data):
+            model.setData(model.createIndex(row, idx),
+                    data, Qt.EditRole)
         desc = self.le_description.text()
         nutrition = self.le_nutrition.text() if self.le_nutrition.isEnabled() \
             and len(self.le_nutrition.text()) > 3 \
@@ -569,9 +587,15 @@ class MainWindow(QMainWindow, Ui_MainWindow):
             item = Item(description=desc, nutrition=nutrition,
                     time=self.d_edit.dateTime().toPyDateTime(),
                     type=self.cb_type.currentText())
-            self.session.merge(item)
+            add_data(1, str(self.d_edit.dateTime().toPyDateTime()))
+            add_data(2, self.cb_type.currentText())
+            add_data(3, desc)
+            add_data(4, nutrition)
             print(item)
-            self.session.commit()
+            if not model.submitAll():
+                raise Exception(model.lastError().text())
+            #self.session.merge(item)
+            #self.session.commit()
             self.le_description.setText("")
             self.le_nutrition.setText("")
         except Exception as e:
