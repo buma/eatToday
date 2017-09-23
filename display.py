@@ -180,15 +180,18 @@ def show_date(date):
         missing_protein, missing_protein_time,
         needed_kcal_lunch-sumed_lunch.kcal))
 
+#now = datetime.datetime.now()
+#days14 = (now-dateutil.relativedelta.relativedelta(days=14))
+##dates = dateutil.rrule.rrule(dateutil.rrule.DAILY,
+        ##dtstart=datetime.datetime(2017,6,5), count=12)
 #dates = dateutil.rrule.rrule(dateutil.rrule.DAILY,
-        #dtstart=datetime.datetime(2017,6,5), count=12)
-#dates = dateutil.rrule.rrule(dateutil.rrule.DAILY,
-        #dtstart=datetime.datetime(2017,6,16))
+        #dtstart=days14, count=7)
 #for date in dates:
     #show_part = set()
     #show_date(date)
 now = datetime.datetime.now()
-yesterday = (now-dateutil.relativedelta.relativedelta(days=1))
+#yesterday = (now-dateutil.relativedelta.relativedelta(days=6)) # (now-dateutil.relativedelta.relativedelta(days=1))
+yesterday =  (now-dateutil.relativedelta.relativedelta(days=1))
 show_date(yesterday)
 show_part = set()
 show_date(now)
