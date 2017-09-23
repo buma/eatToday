@@ -3,7 +3,9 @@ import sqlalchemy
 from sqlalchemy.orm import sessionmaker                                                                                                                          
 from sqlalchemy.exc import DBAPIError   
 from sqlalchemy.orm import joinedload
-from database import Price, LocalNutrition, LocalNutritionaliase, Shop
+from database import (
+        Price, LocalNutrition, LocalNutritionaliase, Shop,
+        Tag, TagItem)
 
 from connectSettings import connectString
 
@@ -12,11 +14,13 @@ engine = sqlalchemy.create_engine(connectString)
 Session = sessionmaker(bind=engine)
 
 session = Session() 
-
+#Crni kruh 3 beli 2
 prices=session.query(Price) \
         .join(LocalNutrition) \
         .order_by(LocalNutrition.desc) \
         .order_by(Price.price)
+        #.join(TagItem) \
+        #.filter(TagItem.tag_id==2) \
 def grouper(item):
     return item.ndbno
 

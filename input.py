@@ -82,6 +82,14 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         self.update_lv_keys(self.local_nutri_query, self.nutri_query,
                 model_keys)
 
+        nutri_model = QSqlQueryModel()
+        nutri_model.setQuery("SELECT nutritionaliases.ingkey AS ingkey," +
+                " nutrition.desc as desc, nutrition.ndbno as ndbno," +
+                " nutrition.gramdsc1 as gramdsc1 " +
+                " FROM nutrition " +
+                " JOIN nutritionaliases " +
+                " ON nutrition.ndbno = nutritionaliases.ndbno" +
+                " ORDER BY ingkey")
 
         self.lv_keys.setModel(model_keys)
 #Do we want all nutritions or just local?

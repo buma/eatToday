@@ -56,6 +56,7 @@ specific_weights = {
         "EGG":"1medium",
         "HRENOVKA":"2par",
         "BANANA":"1medium",
+        "NECTARINE":"1medium"
         }
 
 for food_item in items:
