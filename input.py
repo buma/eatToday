@@ -216,9 +216,8 @@ class MainWindow(QMainWindow, Ui_MainWindow):
 
     def save_tag_item(self):
         print ("Saving tag item")
-        ndbno = self.cb_item_tag.model() \
-                .record(self.cb_item_tag.currentIndex()) \
-                .field("ndbno").value()
+        ndbno = self._get_selected_ndbno(self.cb_item_tag.model() \
+                .record(self.cb_item_tag.currentIndex()))
         print ("Item:", self.cb_item_tag.currentText(), ndbno)
         for index in self.lv_tag.selectedIndexes():
             row = self.tag_item_model.rowCount()
@@ -310,7 +309,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         print ("Shop ID:", shop_id, self.cb_shop.currentText())
         record = self.cb_price_item.model() \
                 .record(self.cb_price_item.currentIndex()) 
-        ndbno = record.field("ndbno").value()
+        ndbno = self._get_selected_ndbno(record)
         package_weight = record.field("package_weight").value()
         slices = record.field("num_of_slices").value()
 
@@ -333,9 +332,10 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         print ("CU:", currency)
         print ("COMMENT:", comment)
         print ("Temp:", temporary)
+        print ("NDBNO:", ndbno, type(ndbno))
+        print ("SHOP ID:", shop_id, type(shop_id))
         row = self.price_model.rowCount()
         self.price_model.insertRow(row)
-        print ("NDBNO:", ndbno)
 
         def add_data(idx, data):
             self.price_model.setData(self.price_model.createIndex(row, idx),
@@ -415,11 +415,10 @@ class MainWindow(QMainWindow, Ui_MainWindow):
     update_bb also needs to be called"""
     def add_bb(self):
         print("Adding to BB")
-        ndbno = self.cb_bb_item.model() \
-                .record(self.cb_bb_item.currentIndex()) \
-                .field("ndbno").value()
-        #print ("IDX:", self.cb_bb_item.currentIndex(),
-                #ndbno)
+        ndbno = self._get_selected_ndbno(self.cb_bb_item.model() \
+                .record(self.cb_bb_item.currentIndex()))
+        print ("IDX:", self.cb_bb_item.currentIndex(),
+                ndbno)
 
 
         row = self.bb_model.rowCount()
@@ -569,17 +568,22 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         if self.le_nutrition.isEnabled():
             self.le_nutrition.insert(model_index.data())
 
+    def _get_selected_ndbno(self, record):
+        ingkey = record.field(0).value()
+#Nutritionaliases table
+        relation_model = self.lv_keys.model().relationModel(0)
+#Selects ingkey selected in list in nutritionaliases table
+        relation_model.setFilter("ingkey='"+ingkey+"'")
+        ndbno = relation_model.data(relation_model.index(0,2))
+        return ndbno
+
+
     def show_usda(self, model_index):
         if self.le_nutrition.isEnabled():
 #Selected nutrition record
             record = self.lv_keys.model() \
                     .record(model_index.row()) 
-            ingkey = record.field(0).value()
-#Nutritionaliases table
-            relation_model = self.lv_keys.model().relationModel(0)
-#Selects ingkey selected in list in nutritionaliases table
-            relation_model.setFilter("ingkey='"+ingkey+"'")
-            ndbno = relation_model.data(relation_model.index(0,2))
+            ndbno = self._get_selected_ndbno(record)
             status = "Units:"
             units = []
             nutrition = self.session.query(LocalNutrition.gramdsc1,
