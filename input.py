@@ -233,6 +233,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
             QMessageBox.critical(None, "Error submitting",
                     "Couldn't update model: " +
                     self.tag_item_model.lastError().text())
+            self.tag_item_model.revertAll()
 
 
     def init_price(self):
