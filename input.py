@@ -230,8 +230,9 @@ class MainWindow(QMainWindow, Ui_MainWindow):
             print (record.field("name").value(), record.field("id").value())
         #self.tv_tag_item.model().submitAll()
         if not self.tag_item_model.submitAll():
-            QMessageBox.error(None, "Couldn't update model",
-                    QMessageBox.Cancel)
+            QMessageBox.critical(None, "Error submitting",
+                    "Couldn't update model: " +
+                    self.tag_item_model.lastError().text())
 
 
     def init_price(self):
@@ -279,8 +280,9 @@ class MainWindow(QMainWindow, Ui_MainWindow):
     def update_price(self):
         print ("Updating price info")
         if not self.price_model.submitAll():
-            QMessageBox.error(None, "Couldn't update model",
-                    QMessageBox.Cancel)
+            QMessageBox.critical(None, "Error updating price:",
+                    "Couldn't update model: " +
+                    self.price_model.lastError().text())
 
     def reset_price(self):
         print ("Resetting price info")
@@ -407,8 +409,9 @@ class MainWindow(QMainWindow, Ui_MainWindow):
     def update_bb(self):
         print ("Updating Best Before")
         if not self.bb_model.submitAll():
-            QMessageBox.error(None, "Couldn't update model",
-                    QMessageBox.Cancel)
+            QMessageBox.critical(None, "Error updating Best Before",
+                    "Couldn't update model: " +
+                    self.bb_model.lastError().text())
 
     """Adds new data to best before table
 
