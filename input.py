@@ -335,6 +335,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         print ("Temp:", temporary)
         row = self.price_model.rowCount()
         self.price_model.insertRow(row)
+        print ("NDBNO:", ndbno)
 
         def add_data(idx, data):
             self.price_model.setData(self.price_model.createIndex(row, idx),
@@ -381,14 +382,15 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         model.select()
         self.bb_model = model
 
-        nutri_model = QSqlTableModel()
-        nutri_model.setTable("nutrition")
-        #nutri_model.setRelation(2, QSqlRelation('nutrition', 'ndbno', 'desc'))
-        nutri_model.setEditStrategy(QSqlRelationalTableModel.OnManualSubmit)
-        nutri_model.setSort(1,Qt.AscendingOrder)
-        nutri_model.select()
+        nutri_model = self.lv_keys.model()
+        #nutri_model = QSqlTableModel()
+        #nutri_model.setTable("nutrition")
+        ##nutri_model.setRelation(2, QSqlRelation('nutrition', 'ndbno', 'desc'))
+        #nutri_model.setEditStrategy(QSqlRelationalTableModel.OnManualSubmit)
+        #nutri_model.setSort(1,Qt.AscendingOrder)
+        #nutri_model.select()
         self.cb_bb_item.setModel(nutri_model)
-        self.cb_bb_item.setModelColumn(1)
+        self.cb_bb_item.setModelColumn(0)
 
         self.tv_best_before.setModel(model)
         self.tv_best_before.setItemDelegate(QSqlRelationalDelegate(self.tv_best_before))
@@ -396,10 +398,10 @@ class MainWindow(QMainWindow, Ui_MainWindow):
 
 #From Price
         self.cb_price_item.setModel(nutri_model)
-        self.cb_price_item.setModelColumn(1)
+        self.cb_price_item.setModelColumn(0)
 #From Tag
         self.cb_item_tag.setModel(nutri_model)
-        self.cb_item_tag.setModelColumn(1)
+        self.cb_item_tag.setModelColumn(0)
 
     """Updates Best before table"""
     def update_bb(self):
@@ -433,10 +435,22 @@ class MainWindow(QMainWindow, Ui_MainWindow):
     def init_add_nutrition(self):
         self.buttonBox_2.accepted.connect(self.add_new_nutrition)
         self.buttonBox_2.button(QDialogButtonBox.Reset).clicked.connect(self.reset_add_nutrition)
-        skip = set(["ndbno"])
-        self.unit_g = set(["water", "protein", "lipid", "carb", "fiber", "sugar"])
+        skip = set(['ndbno', 'ash', 'phosphorus', 'potassium', 'zinc',
+            'copper', 'manganese', 'selenium', 'vitaminc',
+            'alphac', 'betac', 'betacrypt', 'cholestrl', 'choline', 'famono',
+             'fapoly', 'folateacid', 'folatedfe', 'folatetotal',
+             'foodfolate', 'foodgroup', 'lutzea', 'lypocene', 'niacin',
+             'pantoacid', 'refusepct', 'retinol', 'riboflavin', 'sodium',
+             'source', 'thiamin', 'vitaiu', 'vitaminb6', 'vitarae', 'vitb12',
+             'vite', 'vitk'])
+        self.unit_g = set(['water', 'protein', 'lipid', 'carb', 'fiber', 'sugar'])
         idx = 1
         self.inputs = {}
+
+        self.nutritionalias = QSqlTableModel()
+        self.nutritionalias.setTable("nutritionaliases")
+        self.nutritionalias.setEditStrategy(QSqlTableModel.OnManualSubmit)
+
         for c in filter(lambda x: x.name not in skip,
                 LocalNutrition.__table__.columns):
             label = QLabel(self)
@@ -466,7 +480,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
                 if c.name in self.unit_g:
                     le.setMaximum(100)
                     le.setSuffix("g")
-                elif c.name == "gramwt1":
+                elif c.name.startswith("gramwt"):
                     le.setSuffix("g")
                     le.setMaximum(500)
                 else:
@@ -487,20 +501,46 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         line = {}
         for c in filter(lambda x: x.name != "ndbno",
                 LocalNutrition.__table__.columns):
+            if c.name not in self.inputs:
+                continue
             value = self.inputs[c.name]()
             if c.name not in mandatory and value == 0:
                 value = None
-            if c.name == "gramdsc1" and len(value) <= 3:
+            if c.name.startswith("gramdsc") and len(value) <= 3:
                 value = None
             print(c.name, c.type, value)
             if value is not None:
                 line[c.name]=value
+        nutri_model = self.lv_keys.model()
+
+        row = nutri_model.rowCount()
+        nutri_model.insertRow(row)
+        def add_data(key, data):
+            idx = nutri_model.fieldIndex(key)
+            nutri_model.setData(nutri_model.createIndex(row, idx),
+                    data, Qt.EditRole)
+        line["source"]="LOCAL"
+        for key, value in line.items():
+            add_data(key, value)
+            #print ("{} => {}".format(key, value))
+        add_data("ndbno", ingkey)
+        if not nutri_model.submitAll():
+            print ("ERROR submiting:", nutri_model.lastError().text())
+            return
+        ndbno = nutri_model.query().lastInsertId()
+
+        alias_row = self.nutritionalias.rowCount()
+        self.nutritionalias.insertRow(alias_row)
+        def add_alias_data(key, data):
+            idx = self.nutritionalias.fieldIndex(key)
+            self.nutritionalias.setData(self.nutritionalias.createIndex(alias_row, idx),
+                    data, Qt.EditRole)
+        add_alias_data("ingkey", ingkey)
+        add_alias_data("ndbno", ndbno)
+
         nutri = LocalNutrition(**line)
-        self.session.add(nutri)
-        self.session.flush()
         print (nutri)
         alias = LocalNutritionaliase(ingkey=ingkey, ndbno=nutri.ndbno)
-        self.session.add(alias)
         msg = QMessageBox()
         msg.setIcon(QMessageBox.Information)
         msg.setText("Check if everything is OK:")
@@ -509,7 +549,9 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         result = msg.exec_()
         if result == QMessageBox.Save:
             print ("Inserting")
-            self.session.commit()
+            if not self.nutritionalias.submitAll():
+                print ("ERROR submiting:", self.nutritionalias.lastError().text())
+                return
 
 
     def enable_nutrition(self, val):
