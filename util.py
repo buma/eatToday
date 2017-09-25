@@ -171,3 +171,37 @@ def get_nutrition(item, session):
 
     else:
         return item.nutri_info
+"""
+    Adds baked items currently in FoodNutrition into nutrition
+
+    It is assumed that weight in FoodNutrition specified weight of whole baked
+    item
+"""
+def add_baked(food_id, ingkey, desc, session):
+    foodn_names =set(map(lambda x: x.name, FoodNutrition.__table__.columns))
+    n_names =set(map(lambda x: x.name, LocalNutrition.__table__.columns))
+    diff = foodn_names.difference(n_names)
+    food_n = session.query(FoodNutrition).get(food_id)
+
+    if food_n.weight is None or food_n.weight == 0:
+        print ("Error weight isn't set for:", food_n.desc, food_n.nutrition)
+        return
+    ratio = 100/food_n.weight
+    food_n_dict = food_n.__dict__
+    for key in diff:
+        del food_n_dict[key]
+    del food_n_dict["_sa_instance_state"]
+    ln = LocalNutrition(**food_n_dict)
+#We have to calculate nutrition to 100g
+    ln_100=ratio*ln
+    ln_100.made_from=food_id
+    ln_100.desc=desc
+    session.add(ln_100)
+    session.flush()
+    alias = LocalNutritionaliase(ingkey=ingkey, ndbno=ln_100.ndbno)
+    session.add(alias)
+    session.commit()
+
+
+
+

@@ -105,6 +105,7 @@ class FoodNutrition(Base):
     famono = Column(Float)
     fapoly = Column(Float)
     cholestrl = Column(Float)
+    weight = Column(Float)
     items = relationship("Item", backref="nutri_info")
 
     def __repr__(self):
@@ -221,13 +222,14 @@ class LocalNutrition(Base):
     package_weight = Column(Integer)
 #For bread
     num_of_slices = Column(Integer)
+    made_from = Column(Integer)
 
     def __add__(self, other):
         together = {}
         skip = set(["ndbno", "desc", "foodgroup", "gramwt1",
             "gramdsc1", "gramwt2", "gramdsc2", "refusepct",
             "package_weight", "num_of_slices", "source",
-            "_sa_instance_state"])
+            "made_from", "_sa_instance_state"])
         self_vars = vars(self)
         other_vars = vars(other)
         for key, value in self_vars.items():
@@ -248,7 +250,7 @@ class LocalNutrition(Base):
         skip = set(["ndbno", "desc", "foodgroup", "gramwt1",
             "gramdsc1", "gramwt2", "gramdsc2", "refusepct",
             "package_weight", "num_of_slices", "source",
-            "_sa_instance_state"])
+            "made_from", "_sa_instance_state"])
         self_vars = vars(self)
         for key, value in self_vars.items():
             if key not in skip:
