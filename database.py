@@ -267,7 +267,8 @@ class LocalNutrition(Base):
         str_out = []
         for key, value in vars(self).items():
             if key != "_sa_instance_state":
-                str_out.append("{}: {}".format(key,value))
+                if value != 0 and value is not None:
+                    str_out.append("{}: {}".format(key,value))
         return ",".join(str_out)
 
 
