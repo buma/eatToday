@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>400</width>
-    <height>230</height>
+    <width>317</width>
+    <height>541</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -25,6 +25,15 @@
     </widget>
    </item>
    <item>
+    <widget class="QWebView" name="webView">
+     <property name="url">
+      <url>
+       <string>file:///home/mabu/programiranje/eatToday/nutrition/demo.html</string>
+      </url>
+     </property>
+    </widget>
+   </item>
+   <item>
     <widget class="QDialogButtonBox" name="buttonBox">
      <property name="orientation">
       <enum>Qt::Horizontal</enum>
@@ -36,6 +45,13 @@
    </item>
   </layout>
  </widget>
+ <customwidgets>
+  <customwidget>
+   <class>QWebView</class>
+   <extends>QWidget</extends>
+   <header>QtWebKitWidgets/QWebView</header>
+  </customwidget>
+ </customwidgets>
  <resources/>
  <connections>
   <connection>

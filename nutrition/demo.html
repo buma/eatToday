@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<title>2018 Version Demo Page</title>
+	<link rel='stylesheet' type='text/css' media='screen' href='./css/nutritionLabel-min.css'>
+	<!--<link rel='stylesheet' type='text/css' media='screen' href='./css/demo.css'>-->
+
+	<!-- google webfont for nutrition label -->
+	<!--<link rel="stylesheet" type="text/css" href="//fonts.googleapis.com/css?family=Archivo+Black" />-->
+	<link rel='stylesheet' type='text/css' href='./css/font.css'>
+</head>
+<body>
+					<div id="test2"></div>
+
+<script src="./js/jquery.2.2.0.min.js"></script>
+<script type="text/javascript" src="./js/nutritionLabel-min.js"></script>
+<script type="text/javascript">
+$(document).ready(function(){
+$('#test2').nutritionLabel({
+	'calorieIntake':2200,
+	'showServingUnitQuantity' : false,
+	'itemName' : 'DESC',
+	'ingredientList' : 'Bleu Cheese Dressing',
+
+	'decimalPlacesForQuantityTextbox' : 2,
+	'valueServingUnitQuantity' : 1,
+
+	'allowFDARounding' : true,
+	'decimalPlacesForNutrition' : 2,
+
+	'showPolyFat' : true,
+	'showMonoFat' : true,
+
+	'showVitaminD' : false,
+	'showPotassium_2018' : false,
+	'showCalcium' : false,
+	'showIron' : false,
+	'showFatCalories' : false,
+
+	'valueCalories' : KCAL,
+	'valueFatCalories' : 430,
+	'valueTotalFat' : LIPID,
+	'valueSatFat' : FASAT,
+	'valueTransFat' : 0,
+	'valueCholesterol' : CHOLESTRL,
+	'valueSodium' : SODIUM,
+	'valueTotalCarb' : CARB,
+	'valueFibers' : FIBER,
+	'valueSugars' : SUGAR,
+	'valueProteins' : PROTEIN,
+	'showLegacyVersion' : false
+});
+});
+</script>
+
+</body>
+</html>

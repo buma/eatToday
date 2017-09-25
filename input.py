@@ -712,14 +712,8 @@ class MainWindow(QMainWindow, Ui_MainWindow):
             if nutrition is not None:
                 calculation = calculate_nutrition(nutrition, self.session)
                 print (calculation)
-                txt =("{} Calories {} Carb {} Protein {} fat {} fiber" \
-                        " {} sugar {} water".format(calculation.kcal,
-                            calculation.carb, calculation.protein,
-                            calculation.lipid, calculation.fiber,
-                            calculation.sugar, calculation.water))
-                dlg = NutritionDialog(None,txt)
+                dlg = NutritionDialog(None,calculation)
                 dlg.exec_()
-#TODO make nicer label: https://github.com/nutritionix/nutrition-label
         except Exception as e:
             iostream = io.StringIO();
             #Shows error dialog:
