@@ -252,6 +252,13 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         price_model.setRelation(1, QSqlRelation('nutrition', 'ndbno', 'desc'))
         price_model.setRelation(2, QSqlRelation('shop', 'id', 'name'))
         price_model.setSort(1, Qt.AscendingOrder)
+        
+#Nutrition table needs to be populated since otherwise only 256 rows are read
+#And all inserts with ndbno > 100169 fail since they aren't found in nutrition
+        #table
+        nutri_model = price_model.relationModel(1)
+        while nutri_model.canFetchMore():
+            nutri_model.fetchMore()
 
         self.price_model = price_model
 
@@ -341,8 +348,25 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         self.price_model.insertRow(row)
 
         def add_data(idx, data):
-            self.price_model.setData(self.price_model.createIndex(row, idx),
+            return self.price_model.setData(self.price_model.createIndex(row, idx),
                     data, Qt.EditRole)
+        #for i in range(100000,100194):
+        #for i in self.session.query(LocalNutrition.ndbno).filter(LocalNutrition.ndbno
+                #< 100000).order_by(LocalNutrition.ndbno):
+            #out_ndbno = add_data(1, QVariant(i[0]))
+            #print ("{}? = {}".format(out_ndbno, i[0]))
+        #for i in range(100000,100194):
+        ##for i in self.session.query(LocalNutrition.ndbno).filter(LocalNutrition.ndbno
+                ##< 100000).order_by(LocalNutrition.ndbno):
+            #out_ndbno = add_data(1, QVariant(i))
+            #print ("{}? = {}".format(out_ndbno, i))
+        #FIXME: Why is ndbno found in nutrtition only if it lower then 100169
+
+        #relation = self.price_model.relation(1)
+        #print(relation, relation.displayColumn(), relation.indexColumn())
+        #print (relation.dictionary.contains(ndbno))
+
+        #return
 
         add_data(1, ndbno)
         add_data(2, shop_id)
@@ -383,6 +407,12 @@ class MainWindow(QMainWindow, Ui_MainWindow):
 
         model.setRelation(1, QSqlRelation('nutrition', 'ndbno', 'desc'))
         model.select()
+#Nutrition table needs to be populated since otherwise only 256 rows are read
+#And all inserts with ndbno > 100169 fail since they aren't found in nutrition
+        #table
+        nutri_model = model.relationModel(1)
+        while nutri_model.canFetchMore():
+            nutri_model.fetchMore()
         self.bb_model = model
 
         nutri_model = self.lv_keys.model()
@@ -427,11 +457,23 @@ class MainWindow(QMainWindow, Ui_MainWindow):
 
         row = self.bb_model.rowCount()
         self.bb_model.insertRow(row)
-        self.bb_model.setData(self.bb_model.createIndex(row, 1), ndbno,
+        #print ("NDBNO INDEX:", self.bb_model.fieldIndex("desc"))
+        r = self.bb_model.record()
+        #for i in range(r.count()):
+            #print ("{} => {}".format(i,r.fieldName(i)))
+        #for i in range(100000,100194):
+            #out_ndbno = self.bb_model.setData(self.bb_model.createIndex(row,
+                #self.bb_model.fieldIndex("desc")), i,
+                    #Qt.EditRole)
+            #print ("{}? = {}".format(out_ndbno, i))
+        out_ndbno = self.bb_model.setData(self.bb_model.createIndex(row,
+            self.bb_model.fieldIndex("desc")), ndbno,
                 Qt.EditRole)
-        self.bb_model.setData(self.bb_model.createIndex(row, 2),
+        out_time = self.bb_model.setData(self.bb_model.createIndex(row,
+            self.bb_model.fieldIndex("time")),
                 self.de_bb.date(),
                 Qt.EditRole)
+        print ("NDBNO:", out_ndbno, "TIME:", out_time)
 
 
     """Initializes add tab"""
