@@ -36,6 +36,8 @@ from database import (
         Tag, TagItem, UsdaWeight)
 from util import sort_nutrition_string, calculate_nutrition
 
+from nutritionDialog import NutritionDialog
+
 class MainWindow(QMainWindow, Ui_MainWindow):
 
     currencies = {
@@ -710,14 +712,13 @@ class MainWindow(QMainWindow, Ui_MainWindow):
             if nutrition is not None:
                 calculation = calculate_nutrition(nutrition, self.session)
                 print (calculation)
-                msg = QMessageBox()
-                msg.setIcon(QMessageBox.Information)
-                msg.setText("{} Calories {} Carb {} Protein {} fat {} fiber" \
+                txt =("{} Calories {} Carb {} Protein {} fat {} fiber" \
                         " {} sugar {} water".format(calculation.kcal,
                             calculation.carb, calculation.protein,
                             calculation.lipid, calculation.fiber,
                             calculation.sugar, calculation.water))
-                msg.exec_()
+                dlg = NutritionDialog(None,txt)
+                dlg.exec_()
 #TODO make nicer label: https://github.com/nutritionix/nutrition-label
         except Exception as e:
             iostream = io.StringIO();
