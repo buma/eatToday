@@ -222,7 +222,8 @@ class LocalNutrition(Base):
     package_weight = Column(Integer)
 #For bread
     num_of_slices = Column(Integer)
-    made_from = Column(Integer)
+    made_from = Column(ForeignKey('foodnutrition.id'))
+    foodnutrition = relationship("FoodNutrition")
 
     def __add__(self, other):
         together = {}
