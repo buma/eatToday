@@ -253,8 +253,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         price_model.setEditStrategy(QSqlRelationalTableModel.OnManualSubmit)
         price_model.setRelation(1, QSqlRelation('nutrition', 'ndbno', 'desc'))
         price_model.setRelation(2, QSqlRelation('shop', 'id', 'name'))
-        price_model.setSort(1, Qt.AscendingOrder)
-        
+
 #Nutrition table needs to be populated since otherwise only 256 rows are read
 #And all inserts with ndbno > 100169 fail since they aren't found in nutrition
         #table
@@ -267,6 +266,8 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         self.price_model.select()
 
         self.tv_price.setModel(price_model)
+        self.tv_price.setSortingEnabled(True)
+        self.tv_price.sortByColumn(1, Qt.AscendingOrder)
         self.tv_price.setItemDelegate(QSqlRelationalDelegate(self.tv_price))
 
 
