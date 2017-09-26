@@ -202,6 +202,36 @@ def add_baked(food_id, ingkey, desc, session):
     session.add(alias)
     session.commit()
 
+"""
+    Gets list of nutrition descriptions sorted by amount
+
+    This is used to show ingredients in food
+
+    Returns: list of descriptions or empty list
+"""
+def get_nutrition_list(nutrition, session):
+    amounts, weird_amounts, types = get_amounts(nutrition)
+    print ("Search for stuff")
+    nutritions = get_nutrition_for(types, session)
+    if nutritions is not None:
+        nutrition_list = []
+        for item, value in weird_amounts.items():
+            match = nondigit.match(value)
+            #print (item, value, match.groups())
+            grams = get_grams(nutritions[item], match.groupdict(), session)
+            if grams:
+                print (value, "->", grams*100, "g")
+                amounts[item]=grams
+        for item, value in amounts.items():
+            nutrition_list.append((amounts[item], nutritions[item].desc))
+        #Sorts list according to amounts from larger to lower and returns just
+        #the descriptions
+        sorted_list = map(lambda x: x[1], sorted(nutrition_list, key=lambda item:
+            item[0], reverse=True))
+        return sorted_list
+    else:
+        return []
+
 
 
 

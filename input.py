@@ -710,9 +710,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
             else None
         try:
             if nutrition is not None:
-                calculation = calculate_nutrition(nutrition, self.session)
-                print (calculation)
-                dlg = NutritionDialog(None,calculation)
+                dlg = NutritionDialog(None,nutrition, self.session)
                 dlg.exec_()
         except Exception as e:
             iostream = io.StringIO();
