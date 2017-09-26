@@ -406,7 +406,6 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         model = QSqlRelationalTableModel()
         model.setTable("best_before")
         model.setEditStrategy(QSqlRelationalTableModel.OnManualSubmit)
-        model.setSort(2,Qt.AscendingOrder)
 
         model.setRelation(1, QSqlRelation('nutrition', 'ndbno', 'desc'))
         model.select()
@@ -429,6 +428,8 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         self.cb_bb_item.setModelColumn(0)
 
         self.tv_best_before.setModel(model)
+        self.tv_best_before.setSortingEnabled(True)
+        self.tv_best_before.sortByColumn(2, Qt.AscendingOrder)
         self.tv_best_before.setItemDelegate(QSqlRelationalDelegate(self.tv_best_before))
         self.tv_best_before.show()
 
