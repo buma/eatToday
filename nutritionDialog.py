@@ -23,7 +23,7 @@ class NutritionDialog(QDialog, Ui_Dialog):
         self.session = session
         self.nutrition = nutrition
         self.template = open("./nutrition/demo.html", "r").read()
-        calculation = calculate_nutrition(nutrition, self.session)
+        calculation = calculate_nutrition(nutrition, self.session, True)
         self.data = calculation
 
         print (calculation)
@@ -41,12 +41,16 @@ class NutritionDialog(QDialog, Ui_Dialog):
         nutri_list = ",".join(get_nutrition_list(self.nutrition, self.session))
         print (nutri_list)
         out = self.template
+        data_vars = vars(self.data)
+#We need to sort keys so added_sugars are replaced before sugars
+        keys = sorted(data_vars.keys())
 #TODO: Add vitamins etc. (They need to be recalculated to % of DV)
-        for key, value in vars(self.data).items():
+        for key in keys:
+            value = data_vars[key]
             if key not in self.skip:
                 #print (key, value)
                 if key in self.dailyValues:
-                    print ("VALUE:", key,  value)
+                    #print ("VALUE:", key,  value)
                     calc_value = value/self.dailyValues[key]*100
                 else:
                     calc_value = value

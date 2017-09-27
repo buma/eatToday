@@ -120,7 +120,7 @@ def get_grams(nutrition, item, session):
 
 
 
-def calculate_nutrition(nutrition, session):
+def calculate_nutrition(nutrition, session, added_sugar=False):
     if nutrition is None:
         return
     amounts, weird_amounts, types = get_amounts(nutrition)
@@ -145,6 +145,11 @@ def calculate_nutrition(nutrition, session):
                 prev = prev + current
             else:
                 prev = current
+        if added_sugar:
+            if "SUGAR" in amounts:
+                prev.added_sugar=amounts["SUGAR"]*100
+            else:
+                prev.added_sugar = 0
         print (prev, "Carb:",  prev.carb, "Belj:", prev.protein, "Masc:", prev.lipid)
         return prev
 
