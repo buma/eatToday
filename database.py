@@ -269,7 +269,10 @@ class LocalNutrition(Base):
         for key, value in vars(self).items():
             if key != "_sa_instance_state":
                 if value != 0 and value is not None:
-                    str_out.append("{}: {}".format(key,value))
+                    if type(value) == float:
+                        str_out.append("{}: {:.2f}".format(key,value))
+                    else:
+                        str_out.append("{}: {}".format(key,value))
         return ",".join(str_out)
 
 
