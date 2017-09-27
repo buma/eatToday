@@ -40,7 +40,7 @@ class NutritionDialog(QDialog, Ui_Dialog):
         self.lbl_nutrition.setText(txt)
         nutri_list = ",".join(get_nutrition_list(self.nutrition, self.session))
         print (nutri_list)
-        out = self.template.replace("LIST", nutri_list)
+        out = self.template
 #TODO: Add vitamins etc. (They need to be recalculated to % of DV)
         for key, value in vars(self.data).items():
             if key not in self.skip:
@@ -51,6 +51,7 @@ class NutritionDialog(QDialog, Ui_Dialog):
                 else:
                     calc_value = value
                 out = out.replace(key.upper(), str(calc_value))
+        out = out.replace("LIST", nutri_list)
         #vn = open("./nutrition/demo1.html", "w")
         #vn.write(out)
         #vn.close()
