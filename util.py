@@ -205,14 +205,53 @@ def add_baked(food_id, ingkey, desc, session):
 """
     Gets list of nutrition descriptions sorted by amount
 
+    If there is nutrition baked from parts. Parts are used
+
     This is used to show ingredients in food
 
     Returns: list of descriptions or empty list
 """
-def get_nutrition_list(nutrition, session):
+def get_nutrition_list(nutrition, session, weights=None):
     amounts, weird_amounts, types = get_amounts(nutrition)
     print ("Search for stuff")
     nutritions = get_nutrition_for(types, session)
+    partial_list = {}
+#Finds nutrition which consists of other parts (Baked items)
+    for item, value in nutritions.items():
+        #print (item, value)
+        if value.foodnutrition is not None:
+            #print ("WEIGHT:", value.foodnutrition.weight)
+            if item in amounts:
+                amount = amounts[item]
+            elif item in weird_amounts:
+                value = weird_amounts[item]
+                match = nondigit.match(value)
+                #print (item, value, match.groups())
+                grams = get_grams(nutritions[item], match.groupdict(), session)
+                if grams:
+                    print (value, "->", grams*100, "g")
+                    amount =grams
+            partial_list[item]=get_nutrition_list(value.foodnutrition.nutrition,
+                    session, (value.foodnutrition.weight, amount))
+    #Makes amount*item list joined with +
+    def make_nutrition(nutri_list):
+        return "+".join(map(lambda x:str(x[0])+"*"+x[1],nutri_list))
+#Replaces each item with it's nutrition
+    new_nutrition = nutrition
+    for item_key, nutri_list in partial_list.items():
+        part_nutri_list = make_nutrition(nutri_list)
+        #print (item_key, part_nutri_list)
+        new_nutrition = replace_nutrition(new_nutrition, item_key,
+                part_nutri_list)
+    if new_nutrition != nutrition:
+        #print (new_nutrition)
+        amounts, weird_amounts, types = get_amounts(new_nutrition)
+        nutritions = get_nutrition_for(types, session)
+
+    #Partial nutrition we need to recalculate weights
+    if weights is not None:
+        weights = (weights[0]/100, weights[1])
+
     if nutritions is not None:
         nutrition_list = []
         for item, value in weird_amounts.items():
@@ -223,7 +262,21 @@ def get_nutrition_list(nutrition, session):
                 print (value, "->", grams*100, "g")
                 amounts[item]=grams
         for item, value in amounts.items():
-            nutrition_list.append((amounts[item], nutritions[item].desc))
+            if weights is not None:
+                amount = amounts[item]/weights[0]*weights[1]
+                #print ("{}/{}*{}={}".format(amounts[item],
+                    #weights[0],weights[1], amount))
+            else:
+                amount = amounts[item]
+            if weights is not None:
+                nutrition_list.append((amount, item))
+            else:
+                nutrition_list.append((amount, nutritions[item].desc))
+
+        if weights is not None:
+            return nutrition_list
+        #else:
+            #print ("LIST:", nutri_list)
         #Sorts list according to amounts from larger to lower and returns just
         #the descriptions
         sorted_list = map(lambda x: x[1], sorted(nutrition_list, key=lambda item:
@@ -233,5 +286,65 @@ def get_nutrition_list(nutrition, session):
         return []
 
 
+def replace_nutrition(nutrition, search, replace):
+    """Replaces nutrition with expanded nutrition
 
+    Args:
+        nutrition(str): whole nutrition string
+        search(str): nutrition item to search for (AKA DOM_BUCKWHEAT_BROWNIE)
+        replace(str): Whole replaced valid nutrition string
 
+    Returns:
+        nutrition string where value and search item are replaced with replace
+        values
+
+    For example 1package*DOM_ENERGY_BAR gets replaced with replace string
+
+    Simple example only one item in nutrition
+    >>> replace_nutrition('0.33*DOM_BUCKWHEAT_BROWNIE', 'DOM_BUCKWHEAT_BROWNIE', '1tsp*REPLACED')
+    '1tsp*REPLACED'
+
+    One at the end
+    >>> replace_nutrition('0.33*DOM_BUCKWHEAT_BROWNIE+1tsp*SUGAR', 'DOM_BUCKWHEAT_BROWNIE', '1tsp*REPLACED')
+    '1tsp*REPLACED+1tsp*SUGAR'
+
+    Two at end
+    >>> replace_nutrition('0.33*DOM_BUCKWHEAT_BROWNIE+1tsp*SUGAR+2medium*EGG', 'DOM_BUCKWHEAT_BROWNIE', '1tsp*REPLACED')
+    '1tsp*REPLACED+1tsp*SUGAR+2medium*EGG'
+
+    One at start
+    >>> replace_nutrition('1tsp*SUGAR+0.33*DOM_BUCKWHEAT_BROWNIE', 'DOM_BUCKWHEAT_BROWNIE', '1tsp*REPLACED')
+    '1tsp*SUGAR+1tsp*REPLACED'
+
+    Two at start
+    >>> replace_nutrition('1tsp*SUGAR+1*MILK+0.33*DOM_BUCKWHEAT_BROWNIE', 'DOM_BUCKWHEAT_BROWNIE', '1tsp*REPLACED')
+    '1tsp*SUGAR+1*MILK+1tsp*REPLACED'
+
+    One at start and end
+    >>> replace_nutrition('1tsp*SUGAR+0.33*DOM_BUCKWHEAT_BROWNIE+1*MILK', 'DOM_BUCKWHEAT_BROWNIE', '1tsp*REPLACED')
+    '1tsp*SUGAR+1tsp*REPLACED+1*MILK'
+
+    Two at start and end
+    >>> replace_nutrition('1tsp*SUGAR+2*WATER+0.33*DOM_BUCKWHEAT_BROWNIE+1*MILK+3*AIR', 'DOM_BUCKWHEAT_BROWNIE', '1tsp*REPLACED')
+    '1tsp*SUGAR+2*WATER+1tsp*REPLACED+1*MILK+3*AIR'
+
+    >>> replace_nutrition('1tsp*SUGAR+2*WATER+0.33*DOM_ČŠŽBUCKWHEAT_BROWNIE+1*MILK+3*AIR',  'DOM_ČŠŽBUCKWHEAT_BROWNIE', '1tsp*REPLŽACED')
+    '1tsp*SUGAR+2*WATER+1tsp*REPLŽACED+1*MILK+3*AIR'
+
+    Returns:
+    Replaced string
+    """
+#Finds start of Item name
+    start = nutrition.find(search)
+    if start == 0:
+        start_whole = 0
+    else:
+#Finds start of amount
+        start_whole = nutrition.rfind("+",0,start)+1
+    end = start+len(search)
+    search_whole = nutrition[start_whole:end]
+    return nutrition.replace(search_whole, replace)
+
+if __name__ == "__main__":
+    import doctest
+    doctest.testmod()
