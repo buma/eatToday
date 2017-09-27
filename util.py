@@ -12,22 +12,31 @@ from database import (
 
 
 nondigit = re.compile("(?P<number>[\d\.]+)(?P<desc>\D+)")
-"""
+def get_amounts(nutrition, session=None):
+    """
     Gets amounts, weird_amounts and types from nutrition string
 
     Nutrition string is 1kroznik*POLENTA+1tbsp*CVIRKI+1*WATER
+    Nutrition can appear multiple times (1*SUGAR+2*SUGAR = 3*SUGAR)
 
     amounts are just float numbers (1 in this example)
     weird_amounts are descriptive amounts which float value needs to be
     determined (1kroznik and 1tbsp) in this example
 
+    if session is valid sqlalchemy session
+    all weird_amounts are converted to amounts and weird amounts is empty dic
+
+
     types are food names (POLENTA, CVIRKI, WATER) in this example
+    types are returned in lowercase
+
+    >>> get_amounts("2*SUGAR+5*SUGAR")
+    ({'SUGAR': 7.0}, {}, ['sugar'])
 
     Return:
     types are returned lowercase
 
-"""
-def get_amounts(nutrition):
+    """
     items = nutrition.split("+")
     amounts = {}
     weird_amounts = {}
@@ -38,12 +47,26 @@ def get_amounts(nutrition):
         type = type.strip()
         try:
             val = float(amount)
-            amounts[type] = val
+#Items can now appear multiple times
+            amounts[type] = amounts.get(type,0) + val
         except ValueError as e:
+            if type in weird_amounts:
+                raise Exception("Repeated weird amount for same item:", type)
             weird_amounts[type] = amount
             #print ("No pure value", amount)
-    types = [x.lower() for x in itertools.chain(amounts.keys(),
-        weird_amounts.keys())]
+    types = list(set(x.lower() for x in itertools.chain(amounts.keys(),
+        weird_amounts.keys())))
+    if session:
+        nutritions = get_nutrition_for(types, session)
+        for item, value in weird_amounts.items():
+            match = nondigit.match(value)
+            #print (item, value, match.groups())
+            grams = get_grams(nutritions[item], match.groupdict(), session)
+            if grams:
+                print (value, "->", grams*100, "g")
+                amounts[item]=amounts.get(item, 0)+grams
+        weird_amounts = {}
+
     return amounts, weird_amounts, types
 
 """
@@ -58,9 +81,10 @@ def sort_nutrition_string(nutrition):
         up_type = type.upper()
         if up_type in amounts:
             items.append("{}*{}".format(amounts[up_type], up_type))
-        else:
+        if up_type in weird_amounts:
             items.append("{}*{}".format(weird_amounts[up_type], up_type))
-    return "+".join(items)
+    ret_items = "+".join(items)
+    return ret_items
 
 """
 Gets nutrition for each item
@@ -123,19 +147,12 @@ def get_grams(nutrition, item, session):
 def calculate_nutrition(nutrition, session, added_sugar=False):
     if nutrition is None:
         return
-    amounts, weird_amounts, types = get_amounts(nutrition)
+    amounts, weird_amounts, types = get_amounts(nutrition, session)
     print ("Search for stuff")
     nutritions = get_nutrition_for(types, session)
     if nutritions is not None:
         #print (types, nutritions)
         prev = None
-        for item, value in weird_amounts.items():
-            match = nondigit.match(value)
-            #print (item, value, match.groups())
-            grams = get_grams(nutritions[item], match.groupdict(), session)
-            if grams:
-                print (value, "->", grams*100, "g")
-                amounts[item]=grams
         print ("DOUTNG\n")
         for item, value in amounts.items():
             print ("{} ({})*{} L{}".format(item, value, nutritions[item],
@@ -207,6 +224,7 @@ def add_baked(food_id, ingkey, desc, session):
     session.add(alias)
     session.commit()
 
+
 """
     Gets list of nutrition descriptions sorted by amount
 
@@ -217,7 +235,7 @@ def add_baked(food_id, ingkey, desc, session):
     Returns: list of descriptions or empty list
 """
 def get_nutrition_list(nutrition, session, weights=None):
-    amounts, weird_amounts, types = get_amounts(nutrition)
+    amounts, weird_amounts, types = get_amounts(nutrition, session)
     print ("Search for stuff")
     nutritions = get_nutrition_for(types, session)
     partial_list = {}
@@ -228,14 +246,6 @@ def get_nutrition_list(nutrition, session, weights=None):
             #print ("WEIGHT:", value.foodnutrition.weight)
             if item in amounts:
                 amount = amounts[item]
-            elif item in weird_amounts:
-                value = weird_amounts[item]
-                match = nondigit.match(value)
-                #print (item, value, match.groups())
-                grams = get_grams(nutritions[item], match.groupdict(), session)
-                if grams:
-                    print (value, "->", grams*100, "g")
-                    amount =grams
             partial_list[item]=get_nutrition_list(value.foodnutrition.nutrition,
                     session, (value.foodnutrition.weight, amount))
     #Makes amount*item list joined with +
@@ -250,7 +260,7 @@ def get_nutrition_list(nutrition, session, weights=None):
                 part_nutri_list)
     if new_nutrition != nutrition:
         #print (new_nutrition)
-        amounts, weird_amounts, types = get_amounts(new_nutrition)
+        amounts, weird_amounts, types = get_amounts(new_nutrition, session)
         nutritions = get_nutrition_for(types, session)
 
     #Partial nutrition we need to recalculate weights
@@ -259,13 +269,6 @@ def get_nutrition_list(nutrition, session, weights=None):
 
     if nutritions is not None:
         nutrition_list = []
-        for item, value in weird_amounts.items():
-            match = nondigit.match(value)
-            #print (item, value, match.groups())
-            grams = get_grams(nutritions[item], match.groupdict(), session)
-            if grams:
-                print (value, "->", grams*100, "g")
-                amounts[item]=grams
         for item, value in amounts.items():
             if weights is not None:
                 amount = amounts[item]/weights[0]*weights[1]
