@@ -9,6 +9,7 @@ from database import (
         FoodNutrition,
         UsdaWeight
         )
+from gourmet_db import Nutrition
 
 
 nondigit = re.compile("(?P<number>[\d\.]+)(?P<desc>\D+)")
@@ -224,6 +225,23 @@ def add_baked(food_id, ingkey, desc, session):
     session.add(alias)
     session.commit()
 
+def copy_nutrition_to_local(ndbno, ingkey, session):
+    """Copies nutrition from Recipes nutrition to local"""
+    n_names =set(map(lambda x: x.name, Nutrition.__table__.columns))
+    ln_names =set(map(lambda x: x.name, LocalNutrition.__table__.columns))
+    diff = n_names.difference(ln_names)
+    nutrition = session.query(Nutrition).get(ndbno)
+
+    nutrition_dict = nutrition.__dict__
+    for key in diff:
+        del nutrition_dict[key]
+    del nutrition_dict["_sa_instance_state"]
+    ln = LocalNutrition(**nutrition_dict)
+    session.add(ln)
+    session.flush()
+    alias = LocalNutritionaliase(ingkey=ingkey, ndbno=ln.ndbno)
+    session.add(alias)
+    session.commit()
 
 """
     Gets list of nutrition descriptions sorted by amount
