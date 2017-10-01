@@ -37,6 +37,16 @@ class NutritionDialog(QDialog, Ui_Dialog):
                     calculation.carb, calculation.protein,
                     calculation.lipid, calculation.fiber,
                     calculation.sugar, calculation.water))
+
+        caloric_ratio = calculation.caloric_ratio
+        txt = ("Fullness Factor:{}\n Calories from "  \
+        "CARB:{} FAT:{} PROT:{}\n"  \
+        "percentage CARB:FAT:PROT {}:{}:{}".format(
+                calculation.fullness_factor,caloric_ratio["cal_from_carb"],
+                caloric_ratio["cal_from_fat"], caloric_ratio["cal_from_prot"],
+                caloric_ratio["perc_carb"], caloric_ratio["perc_fat"],
+                caloric_ratio["perc_prot"]))
+
         self.lbl_nutrition.setText(txt)
         nutri_list = ",".join(get_nutrition_list(self.nutrition, self.session))
         print (nutri_list)
