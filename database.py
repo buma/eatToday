@@ -7,12 +7,49 @@ ForeignKey, Boolean, Date )
 from sqlalchemy.orm import relationship
 from sqlalchemy.ext.declarative import declarative_base
 
-from gourmet_db import Nutrition
 import colorama
 
 
 Base = declarative_base()
 metadata = Base.metadata
+
+class CalorieCalc(object):
+
+    @property
+    def fullness_factor(self):
+        """Fullness factor
+
+        From 0-5 higher the factor more satient is the food
+
+        Calculated based on formula here:
+            http://nutritiondata.self.com/topics/fullness-factor
+        """
+#Calories must be min 30
+        CAL = max(30, self.kcal)
+#PR proteins max 30
+        PR = min(30, self.protein)
+#DF fiber 12 max
+        fiber = 0 if self.fiber is None else self.fiber
+        DF = min(12, fiber)
+#TF total fat 50 max
+        TF = min(50, self.lipid)
+        FF = max(0.5, min(5.0, 41.7/CAL**0.7 
+            + 0.05*PR + 6.17E-4*DF**3 -
+            7.25E-6*TF**3 + 0.617))
+        return round(FF,1)
+
+    @property
+    def caloric_ratio(self):
+        calories_from_fat = self.lipid*9
+        calories_from_carb = self.carb*4
+        calories_from_prot = self.protein*4
+        return {"cal_from_fat":round(calories_from_fat, 2),
+                "cal_from_carb":round(calories_from_carb, 2),
+                "cal_from_prot":round(calories_from_prot, 2),
+                "perc_fat":round(calories_from_fat/self.kcal*100),
+                "perc_carb":round(calories_from_carb/self.kcal*100),
+                "perc_prot":round(calories_from_prot/self.kcal*100)
+                }
 
 
 
@@ -55,7 +92,7 @@ class Item(Base):
                 description=desc,
                 nutri_info=nutri_info)
 
-class FoodNutrition(Base):
+class FoodNutrition(Base, CalorieCalc):
     __tablename__ = 'foodnutrition'
 
     id = Column(Integer, primary_key=True)
@@ -108,28 +145,6 @@ class FoodNutrition(Base):
     weight = Column(Float)
     items = relationship("Item", backref="nutri_info")
 
-    @property
-    def fullness_factor(self):
-        """Fullness factor
-
-        From 0-5 higher the factor more satient is the food
-
-        Calculated based on formula here:
-            http://nutritiondata.self.com/topics/fullness-factor
-        """
-#Calories must be min 30
-        CAL = max(30, self.kcal)
-#PR proteins max 30
-        PR = min(30, self.protein)
-#DF fiber 12 max
-        fiber = 0 if self.fiber is None else self.fiber
-        DF = min(12, fiber)
-#TF total fat 50 max
-        TF = min(50, self.lipid)
-        FF = max(0.5, min(5.0, 41.7/CAL**0.7 
-            + 0.05*PR + 6.17E-4*DF**3 -
-            7.25E-6*TF**3 + 0.617))
-        return round(FF,1)
 
     def __repr__(self):
         return "<kcal {:3.2f} carb: {:.2f} belj:{:.2f} masc:{:.2f}>".format(self.kcal,
@@ -184,7 +199,7 @@ class FoodNutrition(Base):
 
 
 
-class LocalNutrition(Base):
+class LocalNutrition(Base, CalorieCalc):
     __tablename__ = 'nutrition'
 
     ndbno = Column(Integer, primary_key=True)
@@ -248,41 +263,6 @@ class LocalNutrition(Base):
     made_from = Column(ForeignKey('foodnutrition.id'))
     foodnutrition = relationship("FoodNutrition")
 
-    @property
-    def fullness_factor(self):
-        """Fullness factor
-
-        From 0-5 higher the factor more satient is the food
-
-        Calculated based on formula here:
-            http://nutritiondata.self.com/topics/fullness-factor
-        """
-#Calories must be min 30
-        CAL = max(30, self.kcal)
-#PR proteins max 30
-        PR = min(30, self.protein)
-#DF fiber 12 max
-        fiber = 0 if self.fiber is None else self.fiber
-        DF = min(12, fiber)
-#TF total fat 50 max
-        TF = min(50, self.lipid)
-        FF = max(0.5, min(5.0, 41.7/CAL**0.7 
-            + 0.05*PR + 6.17E-4*DF**3 -
-            7.25E-6*TF**3 + 0.617))
-        return round(FF,1)
-
-    @property
-    def caloric_ratio(self):
-        calories_from_fat = self.lipid*9
-        calories_from_carb = self.carb*4
-        calories_from_prot = self.protein*4
-        return {"cal_from_fat":round(calories_from_fat, 2),
-                "cal_from_carb":round(calories_from_carb, 2),
-                "cal_from_prot":round(calories_from_prot, 2),
-                "perc_fat":round(calories_from_fat/self.kcal*100),
-                "perc_carb":round(calories_from_carb/self.kcal*100),
-                "perc_prot":round(calories_from_prot/self.kcal*100)
-                }
 
     def __add__(self, other):
         together = {}
@@ -303,7 +283,7 @@ class LocalNutrition(Base):
         for key, value in other_vars.items():
             if key not in together and key not in skip:
                 together[key] = value
-        return Nutrition(**together)
+        return LocalNutrition(**together)
     
     def __rmul__(self, other_value):
         together = {}
