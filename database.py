@@ -271,6 +271,19 @@ class LocalNutrition(Base):
             7.25E-6*TF**3 + 0.617))
         return round(FF,1)
 
+    @property
+    def caloric_ratio(self):
+        calories_from_fat = self.lipid*9
+        calories_from_carb = self.carb*4
+        calories_from_prot = self.protein*4
+        return {"cal_from_fat":round(calories_from_fat, 2),
+                "cal_from_carb":round(calories_from_carb, 2),
+                "cal_from_prot":round(calories_from_prot, 2),
+                "perc_fat":round(calories_from_fat/self.kcal*100),
+                "perc_carb":round(calories_from_carb/self.kcal*100),
+                "perc_prot":round(calories_from_prot/self.kcal*100)
+                }
+
     def __add__(self, other):
         together = {}
         skip = set(["ndbno", "desc", "foodgroup", "gramwt1",
