@@ -108,6 +108,29 @@ class FoodNutrition(Base):
     weight = Column(Float)
     items = relationship("Item", backref="nutri_info")
 
+    @property
+    def fullness_factor(self):
+        """Fullness factor
+
+        From 0-5 higher the factor more satient is the food
+
+        Calculated based on formula here:
+            http://nutritiondata.self.com/topics/fullness-factor
+        """
+#Calories must be min 30
+        CAL = max(30, self.kcal)
+#PR proteins max 30
+        PR = min(30, self.protein)
+#DF fiber 12 max
+        fiber = 0 if self.fiber is None else self.fiber
+        DF = min(12, fiber)
+#TF total fat 50 max
+        TF = min(50, self.lipid)
+        FF = max(0.5, min(5.0, 41.7/CAL**0.7 
+            + 0.05*PR + 6.17E-4*DF**3 -
+            7.25E-6*TF**3 + 0.617))
+        return round(FF,1)
+
     def __repr__(self):
         return "<kcal {:3.2f} carb: {:.2f} belj:{:.2f} masc:{:.2f}>".format(self.kcal,
                 self.carb, self.protein, self.lipid)
@@ -224,6 +247,29 @@ class LocalNutrition(Base):
     num_of_slices = Column(Integer)
     made_from = Column(ForeignKey('foodnutrition.id'))
     foodnutrition = relationship("FoodNutrition")
+
+    @property
+    def fullness_factor(self):
+        """Fullness factor
+
+        From 0-5 higher the factor more satient is the food
+
+        Calculated based on formula here:
+            http://nutritiondata.self.com/topics/fullness-factor
+        """
+#Calories must be min 30
+        CAL = max(30, self.kcal)
+#PR proteins max 30
+        PR = min(30, self.protein)
+#DF fiber 12 max
+        fiber = 0 if self.fiber is None else self.fiber
+        DF = min(12, fiber)
+#TF total fat 50 max
+        TF = min(50, self.lipid)
+        FF = max(0.5, min(5.0, 41.7/CAL**0.7 
+            + 0.05*PR + 6.17E-4*DF**3 -
+            7.25E-6*TF**3 + 0.617))
+        return round(FF,1)
 
     def __add__(self, other):
         together = {}
