@@ -25,13 +25,7 @@
     </widget>
    </item>
    <item>
-    <widget class="QWebView" name="webView">
-     <property name="url">
-      <url>
-       <string>file:///home/mabu/programiranje/eatToday/nutrition/demo.html</string>
-      </url>
-     </property>
-    </widget>
+    <widget class="QWebEngineView" name="webView" native="true"/>
    </item>
    <item>
     <widget class="QDialogButtonBox" name="buttonBox">
