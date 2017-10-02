@@ -1,6 +1,7 @@
 import itertools
 import re
 
+import dateutil.relativedelta
 from sqlalchemy.orm.exc import NoResultFound
 from database import (
         Item,
@@ -370,6 +371,19 @@ def replace_nutrition(nutrition, search, replace):
     end = start+len(search)
     search_whole = nutrition[start_whole:end]
     return nutrition.replace(search_whole, replace)
+
+def show_before(eat_id, session, hours=24):
+    item=session.query(Item).get(eat_id)
+    print (item)
+    time = item.time
+    begin=time-dateutil.relativedelta.relativedelta(hours=hours)
+    print (begin,"-",time)
+    items = session.query(Item) \
+            .filter(Item.time.between(begin,time)) \
+            .filter(Item.type != "PIPI") \
+            .order_by(Item.time)
+    for item in items:
+        print (item)
 
 if __name__ == "__main__":
     import doctest
