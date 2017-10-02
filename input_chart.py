@@ -31,9 +31,12 @@ def init_chart(self):
     self.de_chart.setDateTime(QDateTime.currentDateTime())
 
     series = []
+    series2 = []
     axisX = None
+    axisX2 = None
     protein_y = None
     kcal_y = None
+    water_y = None
 
     def default_values(today):
         """
@@ -66,14 +69,20 @@ def init_chart(self):
         protein_series = QLineSeries()
         protein_series.setName("default protein")
         #default_series.setUseOpenGL(True)
+
+        water_series = QLineSeries()
+        water_series.setName("default voda")
         sum_kcal = 0 
         sum_protein = 0 
+        sum_water = 0
         for date in rrule(HOURLY, ds, 2, count=8):
             qdate = to_qdate(date)
             #print (date, qdate, date.timestamp()*1000, qdate.toMSecsSinceEpoch())
             date_msec = int(date.timestamp()*1000)
             default_series.append(date_msec, sum_kcal)
             protein_series.append(date_msec, sum_protein)
+            water_series.append(date_msec, sum_water)
+
             #print (sum_kcal)
             if date.hour < 15:
                 sum_kcal+=needed_kcal_2_hours_till_lunch
@@ -84,8 +93,9 @@ def init_chart(self):
             else:
                 sum_kcal += needed_kcal_2_hours_after_lunch
                 sum_protein += needed_protein_2_hours_after_lunch
+            sum_water += 300
         #print (sum_kcal)
-        return default_series, protein_series
+        return default_series, protein_series, water_series
 
     def chart_date_changed(date):
         """
@@ -127,18 +137,26 @@ def init_chart(self):
 
         protein_series = QLineSeries()
         protein_series.setName("protein")
+
+        water_series = QLineSeries()
+        water_series.setName("water")
         sum_kcal = 0
         sum_protein = 0
+        sum_water = 0
 # Calculates sum of kcal and protein
         for item in items:
             #print (item.description, item.nutri_info.kcal, item.nutri_info.protein)
             sum_kcal+=item.nutri_info.kcal
             sum_protein+=item.nutri_info.protein
+            sum_water+=item.nutri_info.water
             kcal_series.append(int(item.time.timestamp()*1000), sum_kcal)
             protein_series.append((item.time.timestamp()*1000), sum_protein)
+            water_series.append((item.time.timestamp()*1000), sum_water)
+
             #print (sum_kcal, sum_protein)
         kcal_y.setMax(max(2200, sum_kcal))
         protein_y.setMax(max(99, sum_protein))
+        water_y.setMax(max(2100, sum_water))
         #print ("BEFORE CHANGE:")
         #print (axisX.min(), axisX.max())
         #print (datetime.fromtimestamp(default_kcal_s.at(0).x()/1000))
@@ -149,9 +167,12 @@ def init_chart(self):
             default_kcal_s.replace(idx, int(date.timestamp()*1000), point.y())
             default_protein_s.replace(idx, int(date.timestamp()*1000),
                     default_protein_s.at(idx).y())
+            default_water_s.replace(idx, int(date.timestamp()*1000),
+                    default_water_s.at(idx).y())
         #print ("AFTER")
 #Currently x axis is from current date (input of this function) + 15 hours
         axisX.setRange(to_qdate(ds), to_qdate(ds,15))
+        axisX2.setRange(to_qdate(ds), to_qdate(ds,15))
         #print (axisX.min(), axisX.max())
         #print (datetime.fromtimestamp(default_kcal_s.at(0).x()/1000))
             #print (point.x(), point.y())
@@ -170,9 +191,19 @@ def init_chart(self):
         chart.addSeries(protein_series)
         protein_series.attachAxis(axisX)
         protein_series.attachAxis(protein_y)
+
+        chart2 = self.chartView_water.chart()
+        for serie in series2:
+            chart2.removeSeries(serie)
+        series2.clear()
+        series2.append(water_series)
+
+        chart2.addSeries(water_series)
+        water_series.attachAxis(axisX2)
+        water_series.attachAxis(water_y)
         #print(kcal_series)
 
-    default_kcal_s, default_protein_s = default_values(datetime.today().date())
+    default_kcal_s, default_protein_s, default_water_s = default_values(datetime.today().date())
     #self.chartView_bar.chart().removeAllSeries()
     self.chartView_bar.setRenderHint(QPainter.Antialiasing)
     chart = self.chartView_bar.chart()
@@ -199,6 +230,20 @@ def init_chart(self):
     chart.addAxis(protein_y, Qt.AlignRight)
     default_protein_s.attachAxis(axisX)
     default_protein_s.attachAxis(protein_y)
+
+    chart2 = self.chartView_water.chart()
+#Sets X Axis
+    axisX2 = QDateTimeAxis()
+    axisX2.setFormat("h:mm")
+
+    chart2.addSeries(default_water_s)
+    water_y = QValueAxis()
+    water_y.setLinePenColor(default_water_s.pen().color())
+    water_y.setLabelFormat("%.2f g")
+    chart2.addAxis(water_y, Qt.AlignLeft)
+    chart2.addAxis(axisX2, Qt.AlignBottom)
+    default_water_s.attachAxis(axisX2)
+    default_water_s.attachAxis(water_y)
 
 
 
