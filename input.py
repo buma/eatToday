@@ -37,6 +37,7 @@ from database import (
 from util import sort_nutrition_string, calculate_nutrition
 
 from nutritionDialog import NutritionDialog
+import input_chart as i_c
 
 class MainWindow(QMainWindow, Ui_MainWindow):
 
@@ -112,6 +113,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         self.init_best_before()
         self.init_price()
         self.init_tag()
+        self.init_chart()
 
     def enable_usda(self, state):
         if state==Qt.Checked:
@@ -724,4 +726,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
             traceback.print_exc(file=iostream)
             msg.setDetailedText(iostream.getvalue())
             msg.exec_()
+
+    def init_chart(self):
+        i_c.init_chart(self)
 
