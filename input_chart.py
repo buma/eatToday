@@ -232,6 +232,7 @@ def init_chart(self):
     default_protein_s.attachAxis(protein_y)
 
     chart2 = self.chartView_water.chart()
+    self.chartView_water.setRenderHint(QPainter.Antialiasing)
 #Sets X Axis
     axisX2 = QDateTimeAxis()
     axisX2.setFormat("h:mm")
