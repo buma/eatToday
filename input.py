@@ -67,6 +67,8 @@ class MainWindow(QMainWindow, Ui_MainWindow):
                 #Nutritionaliase: gourmet_engine,
                 LocalNutrition: engine,
                 LocalNutritionaliase: engine,
+                Tag: engine,
+                TagItem: engine,
                 FoodNutrition: engine,
                 UsdaWeight: engine
             })
@@ -156,17 +158,21 @@ class MainWindow(QMainWindow, Ui_MainWindow):
 
     def init_tag(self):
 
+#Selected tags when item is selected
+        self.selected_tags = set()
         self.pb_add_tag.pressed.connect(self.add_tag)
         self.pb_add_item_tag.pressed.connect(self.add_item_tag)
         self.pb_add_hier.pressed.connect(self.add_hier)
         self.pb_save_hier.pressed.connect(self.save_hier)
         self.pb_save_tag_item.pressed.connect(self.save_tag_item)
+        self.cb_item_tag.currentIndexChanged.connect(self.select_nutri_tag)
 
 
         tag_model = QSqlTableModel()
         tag_model.setTable("tag")
         tag_model.setEditStrategy(QSqlTableModel.OnRowChange)
-        tag_model.setSort(1, Qt.AscendingOrder)
+#It can't be sorted otherwise wrong tags are selected when item is selected
+        #tag_model.setSort(1, Qt.AscendingOrder)
         tag_model.select()
 
         tag_item_model = QSqlRelationalTableModel()
@@ -218,26 +224,73 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         print ("Saving hier")
         self.tv_tag_hierarchy.model().submitAll()
 
-    def save_tag_item(self):
-        print ("Saving tag item")
+    def select_nutri_tag(self, selectedIndex):
         ndbno = self._get_selected_ndbno(self.cb_item_tag.model() \
                 .record(self.cb_item_tag.currentIndex()))
         print ("Item:", self.cb_item_tag.currentText(), ndbno)
+        tags = self.session.query(TagItem) \
+                .filter(TagItem.ndbno==ndbno) \
+                .order_by(TagItem.tag_id)
+        if self.lv_tag.selectionModel():
+            self.lv_tag.selectionModel().clearSelection()
+        self.selected_tags.clear()
+        for tag in tags:
+            print (tag.tag.name, tag.tag_id)
+            index = self.lv_tag.model().createIndex(tag.tag_id, 1)
+            if index.isValid():
+                print ("Valid index")
+                self.lv_tag.selectionModel().select(index,
+                        QItemSelectionModel.Select)
+                data = self.lv_tag.model().data(index)
+                self.selected_tags.add(tag.tag_id)
+                #print(data)
+
+    def save_tag_item(self):
+        print ("Saving tag item")
+        selected_tags_now = set()
         for index in self.lv_tag.selectedIndexes():
+            record = self.lv_tag.model().record(index.row()) 
+            selected_tags_now.add(record.field("id").value())
+            print (str(record.field("id").value()) + " - " +
+                    record.field("name").value())
+        added_tag_ids = selected_tags_now.difference(self.selected_tags)
+        removed_tag_ids = self.selected_tags.difference(selected_tags_now)
+        #print ("Unselected tags:" + ", ".join(map(lambda x: str(x),
+                #removed_tag_ids)))
+        #print ("New selected tags:" + ", ".join(map(lambda x: str(x),
+                #added_tag_ids)))
+        ndbno = self._get_selected_ndbno(self.cb_item_tag.model() \
+                .record(self.cb_item_tag.currentIndex()))
+        print ("Item:", self.cb_item_tag.currentText(), ndbno)
+
+        query = QSqlQuery()
+        ret = query.prepare("DELETE FROM tag_item WHERE ndbno = :ndbno and tag_id = :tag_id")
+        if not ret:
+            print ("Failed to prepare query")
+
+
+        for tag_id in added_tag_ids:
             row = self.tag_item_model.rowCount()
-            record =self.lv_tag.model().record(index.row()) 
             self.tag_item_model.insertRow(row)
             self.tag_item_model.setData(self.tag_item_model.createIndex(row,
                 1), ndbno, Qt.EditRole)
             self.tag_item_model.setData(self.tag_item_model.createIndex(row,
-                2), record.field("id").value(), Qt.EditRole)
-            print (record.field("name").value(), record.field("id").value())
+                2), tag_id, Qt.EditRole)
+            print ("Adding tag id:", tag_id)
+            #print (record.field("name").value(), record.field("id").value())
         #self.tv_tag_item.model().submitAll()
         if not self.tag_item_model.submitAll():
             QMessageBox.critical(None, "Error submitting",
                     "Couldn't update model: " +
                     self.tag_item_model.lastError().text())
             self.tag_item_model.revertAll()
+        query.bindValue(":ndbno", ndbno)
+        for tag_id in removed_tag_ids:
+            query.bindValue(":tag_id", tag_id)
+            print ("Removing tag_id:", tag_id)
+            if not query.exec_():
+                print ("Failed to executr query")
+            #print (query.executedQuery())
 
 
     def init_price(self):
