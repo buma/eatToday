@@ -13,6 +13,7 @@ from database import (
         FoodNutrition,
         UsdaWeight
         )
+from gourmet_db import Nutrition
 from util import get_amounts, get_nutrition, calculate_nutrition
 
 engine = sqlalchemy.create_engine(connectString)
@@ -21,7 +22,7 @@ gourmet_engine = \
 
 Session = sessionmaker()                                                                                                                          
 Session.configure(binds={Item: engine,
-    #Nutrition: gourmet_engine,
+    Nutrition: gourmet_engine,
     #Nutritionaliase: gourmet_engine,
     LocalNutrition: engine,
     LocalNutritionaliase: engine,
