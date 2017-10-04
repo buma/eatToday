@@ -14,14 +14,19 @@ from gourmet_db import Nutrition
 
 
 nondigit = re.compile("(?P<number>[\d\.]+)(?P<desc>\D+)")
+equation = re.compile("\((?P<eq>(\d+(\.?\d+)?\+?)+)\)")
+#Unless it is in bracket
+split_on_plus = re.compile('\+\s*(?![^()]*\))')
 def get_amounts(nutrition, session=None):
     """
     Gets amounts, weird_amounts and types from nutrition string
 
     Nutrition string is 1kroznik*POLENTA+1tbsp*CVIRKI+1*WATER
+    or (20+20)*SUGAR
     Nutrition can appear multiple times (1*SUGAR+2*SUGAR = 3*SUGAR)
 
     amounts are just float numbers (1 in this example)
+    or equations (5+20)
     weird_amounts are descriptive amounts which float value needs to be
     determined (1kroznik and 1tbsp) in this example
 
@@ -35,11 +40,15 @@ def get_amounts(nutrition, session=None):
     >>> get_amounts("2*SUGAR+5*SUGAR")
     ({'SUGAR': 7.0}, {}, ['sugar'])
 
+    >>> get_amounts("(5+5)*SUGAR")
+    ({'SUGAR': 10.0}, {}, ['sugar'])
+
     Return:
     types are returned lowercase
 
     """
-    items = nutrition.split("+")
+#Splits items on + except if + is inside ()
+    items = split_on_plus.split(nutrition)
     amounts = {}
     weird_amounts = {}
     for item in items:
@@ -47,6 +56,11 @@ def get_amounts(nutrition, session=None):
         amount, type = item.split("*")
         #print ("Amount:{} {}".format(amount, type))
         type = type.strip()
+        match = equation.match(amount)
+#Solves equation
+        if match:
+            gd = match.groupdict()
+            amount = eval(gd["eq"])
         try:
             val = float(amount)
 #Items can now appear multiple times
