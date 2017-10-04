@@ -1,4 +1,5 @@
 import itertools
+from datetime import datetime
 import sqlalchemy                                                                                                                                                
 from sqlalchemy.orm import sessionmaker                                                                                                                          
 from sqlalchemy.exc import DBAPIError   
@@ -36,6 +37,8 @@ def price_per_kcal(price, it):
     else:
         return 0
 
+now = datetime.now().date()
+
 for (item, items) in itertools.groupby(prices, lambda x: x.nutrition.desc):
         #x.nutrition.package_weight):
     sort_items = []
@@ -58,12 +61,14 @@ for (item, items) in itertools.groupby(prices, lambda x: x.nutrition.desc):
                 price_per_kcal(price, it)))))
 
         if it.lowered_price is not None:
+#Skip actions which are not actual anymore
+            if it.lowered_untill is not None and it.lowered_untill < now:
+                continue
             price = it.lowered_price
             sort_items.append((price, ("  {:2.3f} {} {}-{} {} T:{} LOW {:2.3f} per kg {:2.3f} per kcal".format(price, it.currency, it.last_updated,
                 it.lowered_untill,
                 it.shop.name, it.temporary, price_per_kg(price, it),
                 price_per_kcal(price, it)))))
-            print (repr(it.lowered_untill))
         #13% popust v tusu
         #if it.shop_id == 0:
             #price = it.price*(1.00-0.13)
