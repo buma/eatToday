@@ -38,23 +38,39 @@ def price_per_kcal(price, it):
 
 for (item, items) in itertools.groupby(prices, lambda x: x.nutrition.desc):
         #x.nutrition.package_weight):
-    print (item)
+    sort_items = []
+    tus_inside = False
     for it in items:
         if it.currency == "EUR":
             price = it.price
         else:
             price = it.price*0.14
+        if it.shop_id == 0:
+            tus_inside = True
 
-        print ("  {:2.3f} {} {} {} T:{} {:2.3f} per kg {:2.3f} per kcal".format(price, it.currency, it.last_updated,
-            it.shop.name, it.temporary, price_per_kg(price, it), price_per_kcal(price, it)))
+        sort_items.append((price, "  {:2.3f} {} {} {} T:{} {:2.3f} per kg {:2.3f} per kcal".format(price, it.currency, it.last_updated,
+            it.shop.name, it.temporary, price_per_kg(price, it),
+            price_per_kcal(price, it))))
         if (it.shop_id == 4 or it.shop_id == 0) and it.currency == "EUR": #Spar
             price = price*0.75
-            print ("  {:2.3f} {} {} {} T:{} 25% {:2.3f} per kg {:2.3f} per kcal".format(price, it.currency, it.last_updated,
-                it.shop.name, it.temporary, price_per_kg(price, it), price_per_kcal(price, it)))
+            sort_items.append((price, ("  {:2.3f} {} {} {} T:{} 25% {:2.3f} per kg {:2.3f} per kcal".format(price, it.currency, it.last_updated,
+                it.shop.name, it.temporary, price_per_kg(price, it),
+                price_per_kcal(price, it)))))
 
         if it.lowered_price is not None:
             price = it.lowered_price
-            print ("  {:2.3f} {} {}-{} {} T:{} LOW {:2.3f} per kg {:2.3f} per kcal".format(price, it.currency, it.last_updated,
+            sort_items.append((price, ("  {:2.3f} {} {}-{} {} T:{} LOW {:2.3f} per kg {:2.3f} per kcal".format(price, it.currency, it.last_updated,
                 it.lowered_untill,
                 it.shop.name, it.temporary, price_per_kg(price, it),
-                price_per_kcal(price, it)))
+                price_per_kcal(price, it)))))
+            print (repr(it.lowered_untill))
+        #13% popust v tusu
+        #if it.shop_id == 0:
+            #price = it.price*(1.00-0.13)
+            #sort_items.append((price, ("  {:2.3f} {} {} {} T:{} 13% {:2.3f} per kg {:2.3f} per kcal".format(price, it.currency, it.last_updated,
+                #it.shop.name, it.temporary, price_per_kg(price, it),
+                #price_per_kcal(price, it)))))
+    #if tus_inside:
+    print (item)
+    for price, sorted_item in sorted(sort_items, key=lambda x: x[0]):
+        print (sorted_item)
