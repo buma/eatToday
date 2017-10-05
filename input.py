@@ -53,6 +53,8 @@ class MainWindow(QMainWindow, Ui_MainWindow):
 
         self.init_db()
 
+        self.price_proxy = None 
+
 
         self.init_add_eat()
         self.init_add_nutrition()

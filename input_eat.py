@@ -27,6 +27,7 @@ def init_add_eat(self):
     self.local_nutri_query = self.session \
             .query(LocalNutritionaliase.ndbno)
     self.filters = []
+    self.fids = []
 
     eating_model = QSqlTableModel()
     eating_model.setTable("eat")
@@ -70,6 +71,14 @@ def init_add_eat(self):
             model_keys.setFilter(filter)
         else:
             model_keys.setFilter(None)
+        if self.price_proxy is not None:
+            if self.fids:
+                regexp = "|".join((str(x) for x in self.fids))
+                #print (regexp)
+                qregexp = QRegExp("("+regexp+")")
+                self.price_proxy.setFilterRegExp(qregexp)
+            else:
+                self.price_proxy.setFilterRegExp("")
         #print ("Filters:", model_keys.filter(), model_keys.selectStatement())
 
     def filter_add_nutrition(model_index):
@@ -79,18 +88,20 @@ def init_add_eat(self):
 #Remove filter with IN in it
         self.filters = list(filter(lambda x: 'IN' not in x, self.filters))
         if id == 0:
+            self.fids = []
             pass
         else:
             filtered_local = self.local_nutri_query \
                     .join(LocalNutrition) \
                     .join(TagItem) \
                     .filter(TagItem.tag_id==id)
-            fids = []
+            self.fids = []
             for fid in filtered_local:
-                fids.append(fid.ndbno)
-            if fids:
+                self.fids.append(fid.ndbno)
+            if self.fids:
+                #print (fids, "|".join((str(x) for x in fids)))
                 self.filters.append("nutrition.ndbno IN ("+",".join([str(x) for x in
-                    fids])+")")
+                    self.fids])+")")
         update_lv_keys()
 
     def enable_nutrition(val):

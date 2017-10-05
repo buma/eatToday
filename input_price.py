@@ -6,6 +6,8 @@ from PyQt5.QtSql import (
         QSqlRelationalDelegate,
         QSqlRelationalTableModel,
         QSqlTableModel,
+        QSqlQuery,
+        QSqlQueryModel,
         )
 
 def init_price(self):
@@ -41,6 +43,31 @@ def init_price(self):
     self.tv_price.setSortingEnabled(True)
     self.tv_price.sortByColumn(1, Qt.AscendingOrder)
     self.tv_price.setItemDelegate(QSqlRelationalDelegate(self.tv_price))
+
+    price_sort_model = QSqlQueryModel()
+    price_sort_model.setQuery("SELECT nutrition.ndbno, nutrition.desc, shop.name, " +
+            "last_updated, price, price/nutrition.package_weight*1000 as " +
+            " price_kg,  nutrition.kcal/price as kcal_price_100, " +
+            "nutrition.protein/price as protein_price_100," +
+            " (nutrition.kcal*nutrition.package_weight/100)/price as " +
+            " kcal_price_package, " +
+            " (nutrition.protein*nutrition.package_weight/100)/price " +
+            " as protein_price_package, " +
+            "lowered_price, lowered_untill, " +
+            "currency,comment, temporary FROM price " +
+            " JOIN shop ON shop.id == price.shop_id " +
+            " JOIN nutrition ON price.ndbno = nutrition.ndbno " +
+            " WHERE currency = 'EUR' "
+            " ORDER BY nutrition.desc, price")
+    proxy_model = QSortFilterProxyModel(self)
+    proxy_model.setSourceModel(price_sort_model)
+    proxy_model.setFilterKeyColumn(0)
+    self.price_proxy = proxy_model
+    #print (price_sort_model.lastError().text())
+    #print (price_sort_model.query().executedQuery())
+
+    self.tv_price_view.setModel(proxy_model)
+    self.tv_price_view.setSortingEnabled(True)
 
 
 
