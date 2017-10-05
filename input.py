@@ -38,13 +38,10 @@ from util import sort_nutrition_string, calculate_nutrition
 
 from nutritionDialog import NutritionDialog
 import input_chart as i_c
+import input_price as i_p
 
 class MainWindow(QMainWindow, Ui_MainWindow):
 
-    currencies = {
-            "EUR": u"€",
-            "HRK": u"kn"
-            }
     def __init__(self, parent = None):
         QMainWindow.__init__(self, parent)
         self.setupUi(self)
@@ -294,72 +291,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
 
 
     def init_price(self):
-        self.buttonBox_4.button(QDialogButtonBox.SaveAll).clicked.connect(self.update_price)
-        self.buttonBox_4.button(QDialogButtonBox.Reset).clicked.connect(self.reset_price)
-        model = QSqlTableModel()
-        model.setTable("shop")
-        model.setEditStrategy(QSqlRelationalTableModel.OnManualSubmit)
-        model.select()
-
-        self.shop_model = model
-
-        price_model = QSqlRelationalTableModel()
-        price_model.setTable("price")
-        price_model.setEditStrategy(QSqlRelationalTableModel.OnManualSubmit)
-        price_model.setRelation(1, QSqlRelation('nutrition', 'ndbno', 'desc'))
-        price_model.setRelation(2, QSqlRelation('shop', 'id', 'name'))
-
-#Nutrition table needs to be populated since otherwise only 256 rows are read
-#And all inserts with ndbno > 100169 fail since they aren't found in nutrition
-        #table
-        nutri_model = price_model.relationModel(1)
-        while nutri_model.canFetchMore():
-            nutri_model.fetchMore()
-
-        self.price_model = price_model
-
-        self.price_model.select()
-
-        self.tv_price.setModel(price_model)
-        self.tv_price.setSortingEnabled(True)
-        self.tv_price.sortByColumn(1, Qt.AscendingOrder)
-        self.tv_price.setItemDelegate(QSqlRelationalDelegate(self.tv_price))
-
-
-
-
-        self.cb_shop.setModel(model)
-        self.cb_shop.setModelColumn(1)
-
-        #self.cb_shop.lineEdit().editingFinished.connect(self.add_shop)
-        self.pb_add_shop.pressed.connect(self.add_shop)
-        self.pb_add_price.pressed.connect(self.add_price)
-
-        model_currency = QStringListModel()
-        model_currency.setStringList(["EUR", "HRK"])
-        self.cb_currency.currentTextChanged.connect(self.currency_changed)
-        self.cb_currency.setModel(model_currency)
-
-        self.de_last_updated.setMaximumDate(QDate.currentDate())
-        self.de_last_updated.setDateTime(QDateTime.currentDateTime())
-
-    def update_price(self):
-        print ("Updating price info")
-        if not self.price_model.submitAll():
-            QMessageBox.critical(None, "Error updating price:",
-                    "Couldn't update model: " +
-                    self.price_model.lastError().text())
-
-    def reset_price(self):
-        print ("Resetting price info")
-        self.price_model.revertAll()
-
-    """Sets suffix symbols for prices based on currency"""
-    def currency_changed(self, currency):
-        symbol = self.currencies[currency]
-        self.dsp_price.setSuffix(symbol)
-        self.dsp_low_price.setSuffix(symbol)
-
+        i_p.init_price(self)
 
     """Adds new Shop to DB"""
     def add_shop(self):
