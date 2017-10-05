@@ -49,8 +49,6 @@ def init_price(self):
     self.cb_shop.setModelColumn(1)
 
     #self.cb_shop.lineEdit().editingFinished.connect(self.add_shop)
-    self.pb_add_shop.pressed.connect(self.add_shop)
-    self.pb_add_price.pressed.connect(self.add_price)
 
     model_currency = QStringListModel()
     model_currency.setStringList(["EUR", "HRK"])
@@ -75,6 +73,84 @@ def init_price(self):
         symbol = currencies[currency]
         self.dsp_price.setSuffix(symbol)
         self.dsp_low_price.setSuffix(symbol)
+    
+    """Adds new Shop to DB"""
+    def add_shop():
+        print (self.cb_shop.currentText())
+        row = self.shop_model.rowCount()
+        self.shop_model.insertRow(row)
+        self.shop_model.setData(self.shop_model.createIndex(row,1),
+                self.cb_shop.currentText(), Qt.EditRole)
+        self.shop_model.submitAll()
+
+    def add_price():
+        shop_id = self.shop_model.record(self.cb_shop.currentIndex()) \
+                .field("id").value()
+        print ("Shop ID:", shop_id, self.cb_shop.currentText())
+        record = self.cb_price_item.model() \
+                .record(self.cb_price_item.currentIndex()) 
+        ndbno = self._get_selected_ndbno(record)
+        package_weight = record.field("package_weight").value()
+        slices = record.field("num_of_slices").value()
+
+        last_updated = self.de_last_updated.date()
+        price = self.dsp_price.value()
+        lowered_price = self.dsp_low_price.value() if \
+                self.dsp_low_price.value() > 0 else None
+        lowered_untill = self.de_low_untill.date() if \
+                self.de_low_untill.date() > QDate.currentDate() else None
+        currency = self.cb_currency.currentText()
+        comment = self.le_comment.text() if \
+                len(self.le_comment.text()) > 3 else None
+        temporary = self.cb_temporary.isChecked()
+
+        print ("ITEM:", self.cb_price_item.currentText(), ndbno)
+        print ("Weight:", package_weight, " Slices: ", slices)
+        print ("LU:" , last_updated)
+        print ("PRICE:", price, " Low Price:", lowered_price)
+        print ("LOWU:" , lowered_untill)
+        print ("CU:", currency)
+        print ("COMMENT:", comment)
+        print ("Temp:", temporary)
+        print ("NDBNO:", ndbno, type(ndbno))
+        print ("SHOP ID:", shop_id, type(shop_id))
+        row = self.price_model.rowCount()
+        #print ("ROW:", row, self.price_model.relationModel(1).rowCount())
+        self.price_model.insertRow(row)
+
+        def add_data(idx, data):
+            return self.price_model.setData(self.price_model.createIndex(row, idx),
+                    data, Qt.EditRole)
+        #for i in range(100000,100194):
+        #for i in self.session.query(LocalNutrition.ndbno).filter(LocalNutrition.ndbno
+                #< 100000).order_by(LocalNutrition.ndbno):
+            #out_ndbno = add_data(1, QVariant(i[0]))
+            #print ("{}? = {}".format(out_ndbno, i[0]))
+        #for i in range(100000,100194):
+        ##for i in self.session.query(LocalNutrition.ndbno).filter(LocalNutrition.ndbno
+                ##< 100000).order_by(LocalNutrition.ndbno):
+            #out_ndbno = add_data(1, QVariant(i))
+            #print ("{}? = {}".format(out_ndbno, i))
+        #FIXME: Why is ndbno found in nutrtition only if it lower then 100169
+
+        #relation = self.price_model.relation(1)
+        #print(relation, relation.displayColumn(), relation.indexColumn())
+        #print (relation.dictionary.contains(ndbno))
+
+        #return
+
+        add_data(1, ndbno)
+        add_data(2, shop_id)
+        add_data(3, last_updated)
+        add_data(4, price)
+        if lowered_price is not None and lowered_untill is not None:
+            add_data(5, lowered_price)
+            add_data(6, lowered_untill)
+        add_data(7, currency)
+        if comment is not None:
+            add_data(8, comment)
+        add_data(9, temporary)
+        self.price_model.submitAll()
 
     self.update_price = update_price
     self.reset_price = reset_price
@@ -83,3 +159,5 @@ def init_price(self):
     self.buttonBox_4.button(QDialogButtonBox.SaveAll).clicked.connect(self.update_price)
     self.buttonBox_4.button(QDialogButtonBox.Reset).clicked.connect(self.reset_price)
     self.cb_currency.currentTextChanged.connect(self.currency_changed)
+    self.pb_add_shop.pressed.connect(add_shop)
+    self.pb_add_price.pressed.connect(add_price)
