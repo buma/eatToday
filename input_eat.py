@@ -20,7 +20,12 @@ from PyQt5.QtSql import (
         QSqlTableModel,
         )
 from nutritionDialog import NutritionDialog
-from util import sort_nutrition_string
+from util import (
+        sort_nutrition_string,
+        calculate_nutrition,
+        show_nutrition_view,
+        init_nutrition_view
+        )
 
 def init_add_eat(self):
     calc_button = self.buttonBox.addButton("Calculate", QDialogButtonBox.ActionRole)
@@ -53,6 +58,7 @@ def init_add_eat(self):
     self.d_edit.setDateTime(QDateTime.currentDateTime())
     self.cb_type.addItems(["HRANA", "PIPI", "PIJAČA", "STANJE", "ZDRAVILO",
         "KAKA"])
+    init_nutrition_view(self)
 
 
     def enable_usda(state):
@@ -214,6 +220,16 @@ def init_add_eat(self):
             msg.setDetailedText(iostream.getvalue())
             msg.exec_()
 
+    def validate_input_nutrition(nutrition_text):
+        print (nutrition_text)
+        try:
+            print ("OK")
+            show_nutrition_view(self, nutrition_text, self.session)
+        except Exception as e:
+            print (e)
+            print ("FAILED")
+
+
     update_lv_keys()
     enable_nutrition(self.cb_type.currentText())
     self.buttonBox.accepted.connect(add_new)
@@ -223,3 +239,4 @@ def init_add_eat(self):
     self.lv_keys.doubleClicked.connect(add_key_to_nutrition)
     self.lv_keys.clicked.connect(show_usda)
     self.cb_tag_select.currentIndexChanged.connect(filter_add_nutrition)
+    self.le_nutrition.textChanged.connect(validate_input_nutrition)
