@@ -12,6 +12,8 @@ from database import (
         )
 from gourmet_db import Nutrition
 
+from PyQt5.QtCore import QUrl
+
 
 nondigit = re.compile("(?P<number>[\d\.]+)(?P<desc>\D+)")
 equation = re.compile("\((?P<eq>(\d+(\.?\d+)?\+?)+)\)")
@@ -398,6 +400,60 @@ def show_before(eat_id, session, hours=24):
             .order_by(Item.time)
     for item in items:
         print (item)
+
+def init_nutrition_view(self):
+    self.skip = set(["ndbno", "foodgroup", "gramwt1",
+        "gramdsc1", "gramwt2", "gramdsc2", "refusepct",
+        "package_weight", "num_of_slices", "source",
+        "made_from", "_sa_instance_state"])
+    self.dailyValues = {
+            "calcium" : 1300,
+            "iron": 18,
+            "potassium" : 4700,
+            }
+    self.template = open("./nutrition/demo.html", "r").read()
+
+def show_nutrition_view(self, nutrition, session):
+    calculation = calculate_nutrition(nutrition, session, True)
+    txt =("{} Calories {} Carb {} Protein {} fat {} fiber" \
+            " {} sugar {} water".format(calculation.kcal,
+                calculation.carb, calculation.protein,
+                calculation.lipid, calculation.fiber,
+                calculation.sugar, calculation.water))
+
+    caloric_ratio = calculation.caloric_ratio
+    txt = ("Fullness Factor:{}\n Calories from "  \
+    "CARB:{} FAT:{} PROT:{}\n"  \
+    "percentage CARB:FAT:PROT {}:{}:{}".format(
+            calculation.fullness_factor,caloric_ratio["cal_from_carb"],
+            caloric_ratio["cal_from_fat"], caloric_ratio["cal_from_prot"],
+            caloric_ratio["perc_carb"], caloric_ratio["perc_fat"],
+            caloric_ratio["perc_prot"]))
+
+    self.lbl_nutrition.setText(txt)
+    nutri_list = ",".join(get_nutrition_list(nutrition, self.session))
+    print (nutri_list)
+    out = self.template
+    data_vars = vars(calculation)
+#We need to sort keys so added_sugars are replaced before sugars
+    keys = sorted(data_vars.keys())
+#TODO: Add vitamins etc. (They need to be recalculated to % of DV)
+    for key in keys:
+        value = data_vars[key]
+        if key not in self.skip:
+            #print (key, value)
+            if key in self.dailyValues:
+                #print ("VALUE:", key,  value)
+                calc_value = value/self.dailyValues[key]*100
+            else:
+                calc_value = value
+            out = out.replace(key.upper(), str(calc_value))
+    out = out.replace("LIST", nutri_list)
+    #vn = open("./nutrition/demo1.html", "w")
+    #vn.write(out)
+    #vn.close()
+    self.webView.setHtml(out,
+            QUrl("file:///home/mabu/programiranje/eatToday/nutrition/demo.html"))
 
 if __name__ == "__main__":
     import doctest

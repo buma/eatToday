@@ -5,71 +5,19 @@ from PyQt5.QtWidgets import (
         )
 
 from ui_nutrition import Ui_Dialog
-from util import calculate_nutrition, get_amounts, get_nutrition_list
+from util import show_nutrition_view, init_nutrition_view
 
 class NutritionDialog(QDialog, Ui_Dialog):
-    skip = set(["ndbno", "foodgroup", "gramwt1",
-        "gramdsc1", "gramwt2", "gramdsc2", "refusepct",
-        "package_weight", "num_of_slices", "source",
-        "made_from", "_sa_instance_state"])
-    dailyValues = {
-            "calcium" : 1300,
-            "iron": 18,
-            "potassium" : 4700,
-            }
     def __init__(self, parent = None, nutrition = None, session=None):
         QDialog.__init__(self, parent)
         self.setupUi(self)
         self.session = session
         self.nutrition = nutrition
-        self.template = open("./nutrition/demo.html", "r").read()
-        calculation = calculate_nutrition(nutrition, self.session, True)
-        self.data = calculation
-
-        print (calculation)
+        init_nutrition_view(self)
 
         self.initUI()
 
     def initUI(self):
-        calculation = self.data
-        txt =("{} Calories {} Carb {} Protein {} fat {} fiber" \
-                " {} sugar {} water".format(calculation.kcal,
-                    calculation.carb, calculation.protein,
-                    calculation.lipid, calculation.fiber,
-                    calculation.sugar, calculation.water))
-
-        caloric_ratio = calculation.caloric_ratio
-        txt = ("Fullness Factor:{}\n Calories from "  \
-        "CARB:{} FAT:{} PROT:{}\n"  \
-        "percentage CARB:FAT:PROT {}:{}:{}".format(
-                calculation.fullness_factor,caloric_ratio["cal_from_carb"],
-                caloric_ratio["cal_from_fat"], caloric_ratio["cal_from_prot"],
-                caloric_ratio["perc_carb"], caloric_ratio["perc_fat"],
-                caloric_ratio["perc_prot"]))
-
-        self.lbl_nutrition.setText(txt)
-        nutri_list = ",".join(get_nutrition_list(self.nutrition, self.session))
-        print (nutri_list)
-        out = self.template
-        data_vars = vars(self.data)
-#We need to sort keys so added_sugars are replaced before sugars
-        keys = sorted(data_vars.keys())
-#TODO: Add vitamins etc. (They need to be recalculated to % of DV)
-        for key in keys:
-            value = data_vars[key]
-            if key not in self.skip:
-                #print (key, value)
-                if key in self.dailyValues:
-                    #print ("VALUE:", key,  value)
-                    calc_value = value/self.dailyValues[key]*100
-                else:
-                    calc_value = value
-                out = out.replace(key.upper(), str(calc_value))
-        out = out.replace("LIST", nutri_list)
-        #vn = open("./nutrition/demo1.html", "w")
-        #vn.write(out)
-        #vn.close()
-        self.webView.setHtml(out,
-                QUrl("file:///home/mabu/programiranje/eatToday/nutrition/demo.html"))
+        show_nutrition_view(self, self.nutrition, self.session)
 
 
