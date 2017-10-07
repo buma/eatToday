@@ -1,5 +1,6 @@
 import itertools
 import re
+import math
 
 import dateutil.relativedelta
 from sqlalchemy.orm.exc import NoResultFound
@@ -454,6 +455,47 @@ def show_nutrition_view(self, nutrition, session):
     #vn.close()
     self.webView.setHtml(out,
             QUrl("file:///home/mabu/programiranje/eatToday/nutrition/demo.html"))
+
+def nutrition_equation_solver(nutrition_eq, session):
+    """
+    Nutrition equation solver
+
+    Equation looks like x*CHICKPEA_PASTA+0.05*PARMESAN=protein:20
+
+    Left part is basically normal nutrition item except, weird amounts aren't
+    supported for now and one item has lowecase letter instead of amount.
+
+    Right side has nutrient:value. Nutrient is any nutrient in nutrition (lipid,
+    kcal, protein, sugar etc.)
+    Value is how many of this nutrient we want.
+
+    solver will calculate how much of item with x we need to have wanted
+    amount of nutrient
+    """
+    left, right = nutrition_eq.split("=")
+    wanted_nutrient, amount = right.split(":")
+    amount = float(amount)
+    amounts, weird_amounts, types = get_amounts(left)
+    nutritions = get_nutrition_for(types, session)
+    wanted_item = next(iter(weird_amounts.keys()))
+    have_nutritions = nutritions[wanted_item]
+    if wanted_nutrient not in have_nutritions.__dict__:
+        raise Exception ("Want item can be one of:", have_nutritions.__dict__.keys())
+
+#How many of wanted nutrient has 100g of wanted item
+    have_nutrient = have_nutritions.__dict__[wanted_nutrient]
+    variable = next(iter(weird_amounts.values()))
+#We need to calculate how many of wanted item is in the rest of nutrition
+    if len(types) > 1:
+        new_nutrition = left.replace(variable, "0", 1)
+        #print (left, new_nutrition)
+        c = calculate_nutrition(new_nutrition, session)
+        amount = amount-c.__dict__[wanted_nutrient]
+    STR="{}g = {} {}"
+    print (STR.format(100, have_nutrient, wanted_nutrient))
+    print (STR.format(variable, amount, wanted_nutrient))
+    val = math.ceil(amount*100/have_nutrient)
+    print ("{} = {}g {}".format(variable, val, wanted_item))
 
 if __name__ == "__main__":
     import doctest
