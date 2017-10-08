@@ -225,6 +225,7 @@ def init_add_eat(self):
         try:
             print ("OK")
             show_nutrition_view(self, nutrition_text, self.session)
+            self.le_nutrition.setFocus()
         except Exception as e:
             print (e)
             print ("FAILED")
