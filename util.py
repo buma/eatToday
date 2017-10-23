@@ -497,6 +497,21 @@ def nutrition_equation_solver(nutrition_eq, session):
     val = math.ceil(amount*100/have_nutrient)
     print ("{} = {}g {}".format(variable, val, wanted_item))
 
+def rename(from_n, to_n, session):
+    """Rename nutrition in eats from <from_n> to <to_n>
+
+        Nothing is commited
+    """
+    nutritions = session.query(Item) \
+            .filter(Item.nutrition.contains(from_n))
+    for nutri in nutritions:
+        replaced = nutri.nutrition.replace(from_n,
+                to_n)
+        print (nutri.nutrition, replaced, nutri.description)
+        nutri.nutrition = sort_nutrition_string(replaced)
+        nutri.calc_nutrition = None
+        print (nutri)
+
 if __name__ == "__main__":
     import doctest
     doctest.testmod()
