@@ -9,6 +9,8 @@ from database import (
         LocalNutrition,
         LocalNutritionaliase,
         FoodNutrition,
+        TagItem,
+        Tag,
         UsdaWeight
         )
 from gourmet_db import Nutrition
@@ -511,6 +513,41 @@ def rename(from_n, to_n, session):
         nutri.nutrition = sort_nutrition_string(replaced)
         nutri.calc_nutrition = None
         print (nutri)
+
+def add_tag(foodgroup, tag, session):
+    """Add new tag_items based on foodgroup
+
+    tag can be name or tag_id (number)
+    """
+    if type(tag)==int:
+        tag_id = tag
+    else:
+        tag_id = session.query(Tag.id) \
+                .filter(Tag.name==tag) \
+                .one()[0]
+    ndbnos_d = {}
+#NDBNO ids of all nutritions in specific foodgroup 
+    ndbnos = session.query(LocalNutrition.ndbno, LocalNutrition.desc) \
+            .filter(LocalNutrition.foodgroup==foodgroup)
+    for ndbno, desc in ndbnos:
+        ndbnos_d[ndbno]=desc
+    ndbnos_l = ndbnos_d.keys()
+#NDBNO ids of specific foodgroup that already had tag
+    already_added_ndbnos = session.query(TagItem.ndbno) \
+            .filter(TagItem.tag_id==tag_id) \
+            .filter(TagItem.ndbno.in_(ndbnos_l))
+    already_added_ndbnos_s = set((x[0] for x in already_added_ndbnos))
+    for ndbno, desc in ndbnos_d.items():
+        added = ndbno in already_added_ndbnos_s
+        print (ndbno, desc, added)
+    all_ndbnos_s = set(ndbnos_l)
+    to_add_ndbnos = all_ndbnos_s.difference(already_added_ndbnos_s)
+    for ndbno in to_add_ndbnos:
+        tag_item = TagItem(ndbno=ndbno, tag_id=tag_id)
+        session.add(tag_item)
+
+
+
 
 if __name__ == "__main__":
     import doctest
