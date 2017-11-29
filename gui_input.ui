@@ -723,6 +723,20 @@
            </attribute>
            <layout class="QVBoxLayout" name="verticalLayout_17">
             <item>
+             <layout class="QFormLayout" name="formLayout_7">
+              <item row="0" column="0">
+               <widget class="QLabel" name="label_20">
+                <property name="text">
+                 <string>Chart type:</string>
+                </property>
+               </widget>
+              </item>
+              <item row="0" column="1">
+               <widget class="QComboBox" name="cb_kcal_chart_type"/>
+              </item>
+             </layout>
+            </item>
+            <item>
              <widget class="QChartView" name="chartView_kcal" native="true"/>
             </item>
            </layout>

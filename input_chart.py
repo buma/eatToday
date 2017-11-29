@@ -8,7 +8,8 @@ from PyQt5.QtCore import *
 from PyQt5.QtGui import QPainter
 from PyQt5.QtChart import (
         QChart, QChartView, QDateTimeAxis, QLineSeries,
-QValueAxis, QBarSet, QBarSeries, QBarCategoryAxis)
+QValueAxis, QBarSet, QBarSeries, QBarCategoryAxis, QStackedBarSeries,
+QPercentBarSeries)
 from database import (
         Item, LocalNutrition, LocalNutritionaliase, FoodNutrition,
         Tag, TagItem, UsdaWeight)
@@ -26,10 +27,66 @@ def to_qdate(date, add=0):
     qt_date.setSecsSinceEpoch(date.timestamp()+add*3600)
     return qt_date
 
+#TODO k=5/2 n=-1050
+#water = k*(hour*60)+n se dobi kolko vode se more spit
+
 def init_chart(self):
     print ("Initialazing")
     self.de_chart.setMaximumDate(QDate.currentDate())
     self.de_chart.setDateTime(QDateTime.currentDateTime())
+    self.idx_kcal = [
+            ("Macronutrients", "Macronutrients from {} to {}",
+        #Dictionary where key is what we want to chart from foodnutrition and
+        #value is description to show in legend
+                {
+                "carb": "Oglj. hidrati",
+                "lipid": "Maščobe",
+                "protein": "Beljakovine",
+                "sugar": "Sladkor",
+                "fiber": "Vlaknine"
+                },
+                lambda nutrient, x: x,
+                QBarSeries,
+                "%.2f g"
+                ),
+            ("Micronutrients", "Micronutrients from {} to {}",
+                {
+                    "calcium": "Kalcij",
+                    "iron": "Železo",
+                    "magnesium": "Magnezij",
+                    "potassium": "Kalij",
+                    "sodium": "Natrij"
+                    },
+                lambda nutrient, x: x,
+                QBarSeries,
+                "%.2f mg"
+                ),
+            ("Macronutrients kcal", "Macronutrients in kcal from {} to {}",
+                {
+                "protein": "Beljakovine",
+                "lipid": "Maščobe",
+                "carb": "Oglj. hidrati",
+                },
+                lambda nutrient, value: value*4 if nutrient=="carb" or \
+                nutrient=="protein" else value*9,
+                QStackedBarSeries,
+                "%.2f kcal"
+                ),
+            ("Macronutrients kcal %", "Macronutrients in % of kcal from {} to {}",
+                {
+                "protein": "Beljakovine",
+                "lipid": "Maščobe",
+                "carb": "Oglj. hidrati",
+                },
+                lambda nutrient, value: value*4 if nutrient=="carb" or \
+                nutrient=="protein" else value*9,
+                QPercentBarSeries,
+                "%d %"
+                )
+            ]
+    self.cb_kcal_chart_type.addItems([
+        x[0] for x in self.idx_kcal
+        ])
 
     series = []
     series2 = []
@@ -109,7 +166,7 @@ def init_chart(self):
         #today = datetime(today.year, today.month, today.day)
         tomorow = (today+dateutil.relativedelta.relativedelta(days=1))
         print (today, "-", tomorow)
-        self.init_kcal_week_chart(today)
+        self.init_kcal_week_chart(date, self.cb_kcal_chart_type.currentIndex())
         
 # Joinedload loads stuff in one query instead of multiple ones
         #def query(start, end):
@@ -249,32 +306,28 @@ def init_chart(self):
     default_water_s.attachAxis(axisX2)
     default_water_s.attachAxis(water_y)
 
-    def init_kcal_week_chart(today):
+    def init_kcal_week_chart(today, chart_idx_type):
+        today = today.toPyDateTime().date()
         today = (today+dateutil.relativedelta.relativedelta(days=1))
         last_week = (today+dateutil.relativedelta.relativedelta(days=-7))
 
         print (last_week, "-", today)
+        chart_data = self.idx_kcal[chart_idx_type]
         self.chartView_kcal.chart() \
-                .setTitle("Kcal from {} to {}".format(last_week, today))
-        #Dictionary where key is what we want to chart from foodnutrition and
-        #value is description to show in legend
-        keys = {
-                "carb": "Oglj. hidrati",
-                "lipid": "Maščobe",
-                "protein": "Beljakovine",
-                "sugar": "Sladkor",
-                "fiber": "Vlaknine"
-                }
+                .setTitle(chart_data[1].format(last_week, today))
+        keys = chart_data[2]
         sets = {}
         entities = [sa.func.strftime("%Y-%m-%d",Item.time).label("day")]
 
 #Creates barsets where each barset is one value in foodnutrition
 #Each value in barset is different day
 #Also creates sqlalchemy sum select
+        func_multiplay = chart_data[3]
         for nutrition, nutrition_name in keys.items():
             sets[nutrition] = QBarSet(nutrition_name)
             entities.append(
-                    sa.func.sum(getattr(FoodNutrition, nutrition)) \
+                    sa.func.sum(func_multiplay(nutrition,getattr(FoodNutrition,
+                        nutrition))) \
                             .label(nutrition))
 
 
@@ -297,7 +350,7 @@ def init_chart(self):
                 else:
                     bar_set.append(0)
 
-        bar_series = QBarSeries()
+        bar_series = chart_data[4]()
         for value in sets.values():
             bar_series.append(value)
         #Creates x axis with dates
@@ -314,7 +367,7 @@ def init_chart(self):
 
         chart.createDefaultAxes()
         chart.setAxisX(axis, bar_series)
-        chart.axisY(bar_series).setLabelFormat("%.2f g")
+        chart.axisY(bar_series).setLabelFormat(chart_data[5])
         chart.axisY(bar_series).setTickCount(10)
         chart.legend().setVisible(True)
         chart.legend().setAlignment(Qt.AlignBottom)
@@ -325,6 +378,8 @@ def init_chart(self):
 
     self.de_chart.dateTimeChanged.connect(self.chart_date_changed)
     self.chart_date_changed(self.de_chart.dateTime())
+    self.cb_kcal_chart_type.currentIndexChanged.connect(lambda idx:
+            self.init_kcal_week_chart(self.de_chart.dateTime(), idx))
     #today = self.de_chart.selecte
 
 
