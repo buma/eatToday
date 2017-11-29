@@ -221,14 +221,20 @@ def init_add_eat(self):
             msg.exec_()
 
     def validate_input_nutrition(nutrition_text):
-        print (nutrition_text)
+        #print (nutrition_text)
         try:
-            print ("OK")
+            #print ("OK")
+            self.lbl_nutri_state.setStyleSheet("color:green")
+            self.lbl_nutri_state.setText("OK")
+            self.lbl_nutri_error.clear()
             show_nutrition_view(self, nutrition_text, self.session)
             self.le_nutrition.setFocus()
         except Exception as e:
-            print (e)
-            print ("FAILED")
+            #print (e)
+            self.lbl_nutri_error.setText(str(e))
+            self.lbl_nutri_state.setStyleSheet("color:red")
+            self.lbl_nutri_state.setText("FAILED")
+            #print ("FAILED")
 
 
     update_lv_keys()
