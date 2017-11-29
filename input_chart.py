@@ -1,13 +1,14 @@
 from datetime import datetime
 import dateutil.relativedelta
-from dateutil.rrule import rrule, HOURLY
+import sqlalchemy as sa
+from dateutil.rrule import rrule, HOURLY, DAILY
 from sqlalchemy.orm import joinedload
 from sqlalchemy.sql import func
 from PyQt5.QtCore import *                                                                                                                                       
 from PyQt5.QtGui import QPainter
 from PyQt5.QtChart import (
         QChart, QChartView, QDateTimeAxis, QLineSeries,
-QValueAxis)
+QValueAxis, QBarSet, QBarSeries, QBarCategoryAxis)
 from database import (
         Item, LocalNutrition, LocalNutritionaliase, FoodNutrition,
         Tag, TagItem, UsdaWeight)
@@ -108,6 +109,8 @@ def init_chart(self):
         #today = datetime(today.year, today.month, today.day)
         tomorow = (today+dateutil.relativedelta.relativedelta(days=1))
         print (today, "-", tomorow)
+        self.init_kcal_week_chart(today)
+        
 # Joinedload loads stuff in one query instead of multiple ones
         #def query(start, end):
                     ##func.sum(FoodNutrition.kcal).label("kcal_sum"),
@@ -246,11 +249,82 @@ def init_chart(self):
     default_water_s.attachAxis(axisX2)
     default_water_s.attachAxis(water_y)
 
+    def init_kcal_week_chart(today):
+        today = (today+dateutil.relativedelta.relativedelta(days=1))
+        last_week = (today+dateutil.relativedelta.relativedelta(days=-7))
+
+        print (last_week, "-", today)
+        self.chartView_kcal.chart() \
+                .setTitle("Kcal from {} to {}".format(last_week, today))
+        #Dictionary where key is what we want to chart from foodnutrition and
+        #value is description to show in legend
+        keys = {
+                "carb": "Oglj. hidrati",
+                "lipid": "Maščobe",
+                "protein": "Beljakovine",
+                "sugar": "Sladkor",
+                "fiber": "Vlaknine"
+                }
+        sets = {}
+        entities = [sa.func.strftime("%Y-%m-%d",Item.time).label("day")]
+
+#Creates barsets where each barset is one value in foodnutrition
+#Each value in barset is different day
+#Also creates sqlalchemy sum select
+        for nutrition, nutrition_name in keys.items():
+            sets[nutrition] = QBarSet(nutrition_name)
+            entities.append(
+                    sa.func.sum(getattr(FoodNutrition, nutrition)) \
+                            .label(nutrition))
+
+
+
+#Query which select all foodnutrition between last_week and today and sums it
+#up grouped by day
+        items = \
+        sa.orm.query.Query(entities, session=self.session) \
+                .join(FoodNutrition) \
+                .filter(Item.time.between(last_week, today)) \
+                .group_by("day") \
+                .order_by(Item.time)
+        #print (items.column_descriptions)
+        #items.column_descriptions
+#je list z dictinariy kjer je key name pove imena columnov
+        for item in items:
+            for key, bar_set in sets.items():
+                if key in item.keys():
+                    bar_set.append(getattr(item, key))
+                else:
+                    bar_set.append(0)
+
+        bar_series = QBarSeries()
+        for value in sets.values():
+            bar_series.append(value)
+        #Creates x axis with dates
+        string_dates = []
+        for date in rrule(DAILY, last_week, count=7):
+            string_dates.append(date.strftime("%a %d. %b"))
+        axis = QBarCategoryAxis()
+        axis.append(string_dates)
+
+        chart = self.chartView_kcal.chart()
+        chart.removeAllSeries()
+        chart.addSeries(bar_series)
+        chart.setAnimationOptions(QChart.SeriesAnimations)
+
+        chart.createDefaultAxes()
+        chart.setAxisX(axis, bar_series)
+        chart.axisY(bar_series).setLabelFormat("%.2f g")
+        chart.axisY(bar_series).setTickCount(10)
+        chart.legend().setVisible(True)
+        chart.legend().setAlignment(Qt.AlignBottom)
 
 
     self.chart_date_changed = chart_date_changed
+    self.init_kcal_week_chart = init_kcal_week_chart
 
     self.de_chart.dateTimeChanged.connect(self.chart_date_changed)
     self.chart_date_changed(self.de_chart.dateTime())
     #today = self.de_chart.selecte
+
 

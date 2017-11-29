@@ -679,15 +679,15 @@
         <item>
          <widget class="QToolBox" name="tb_charts">
           <property name="currentIndex">
-           <number>1</number>
+           <number>2</number>
           </property>
           <widget class="QWidget" name="page_3">
            <property name="geometry">
             <rect>
              <x>0</x>
              <y>0</y>
-             <width>100</width>
-             <height>30</height>
+             <width>633</width>
+             <height>369</height>
             </rect>
            </property>
            <attribute name="label">
@@ -705,7 +705,7 @@
              <x>0</x>
              <y>0</y>
              <width>633</width>
-             <height>398</height>
+             <height>369</height>
             </rect>
            </property>
            <attribute name="label">
@@ -714,6 +714,16 @@
            <layout class="QVBoxLayout" name="verticalLayout_13">
             <item>
              <widget class="QChartView" name="chartView_water" native="true"/>
+            </item>
+           </layout>
+          </widget>
+          <widget class="QWidget" name="page_chart_kcal">
+           <attribute name="label">
+            <string>Kcal</string>
+           </attribute>
+           <layout class="QVBoxLayout" name="verticalLayout_17">
+            <item>
+             <widget class="QChartView" name="chartView_kcal" native="true"/>
             </item>
            </layout>
           </widget>
