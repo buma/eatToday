@@ -307,14 +307,15 @@ def init_chart(self):
     default_water_s.attachAxis(water_y)
 
     def init_kcal_week_chart(today, chart_idx_type):
-        today = today.toPyDateTime().date()
-        today = (today+dateutil.relativedelta.relativedelta(days=1))
+        today_o = today.toPyDateTime().date()
+        today = (today_o+dateutil.relativedelta.relativedelta(days=1))
         last_week = (today+dateutil.relativedelta.relativedelta(days=-7))
 
         print (last_week, "-", today)
         chart_data = self.idx_kcal[chart_idx_type]
         self.chartView_kcal.chart() \
-                .setTitle(chart_data[1].format(last_week, today))
+                .setTitle(chart_data[1].format(last_week.strftime("%a %d. %b"),
+                    today_o.strftime("%a %d. %b")))
         keys = chart_data[2]
         sets = {}
         entities = [sa.func.strftime("%Y-%m-%d",Item.time).label("day")]
