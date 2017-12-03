@@ -43,7 +43,8 @@ def init_chart(self):
                 "lipid": "Maščobe",
                 "protein": "Beljakovine",
                 "sugar": "Sladkor",
-                "fiber": "Vlaknine"
+                "fiber": "Vlaknine",
+                "fasat": "Nasičene maščobe",
                 },
                 lambda nutrient, x: x,
                 QBarSeries,
