@@ -34,6 +34,13 @@ def init_chart(self):
     print ("Initialazing")
     self.de_chart.setMaximumDate(QDate.currentDate())
     self.de_chart.setDateTime(QDateTime.currentDateTime())
+    limits = {
+            "calcium": 1000,
+            "iron":8,
+            "magnesium":400,
+            "potassium": 4700,
+            "sodium": 1500
+            }
     self.idx_kcal = [
             ("Macronutrients", "Macronutrients from {} to {}",
         #Dictionary where key is what we want to chart from foodnutrition and
@@ -61,6 +68,18 @@ def init_chart(self):
                 lambda nutrient, x: x,
                 QBarSeries,
                 "%.2f mg"
+                ),
+            ("Micronutrients in % RDA", "Micronutrients in % from RDA from {} to {}",
+                {
+                    "calcium": "Kalcij",
+                    "iron": "Železo",
+                    "magnesium": "Magnezij",
+                    "potassium": "Kalij",
+                    "sodium": "Natrij"
+                    },
+                lambda nutrient, x: x/limits[nutrient]*100,
+                QBarSeries,
+                "%d %%"
                 ),
             ("Macronutrients kcal", "Macronutrients in kcal from {} to {}",
                 {
