@@ -22,6 +22,11 @@ def init_tag(self):
     #tag_model.setSort(1, Qt.AscendingOrder)
     tag_model.select()
 
+    #Added proxy model which is sorted on name
+    tag_proxy_model = QSortFilterProxyModel(self)
+    tag_proxy_model.setSourceModel(tag_model)
+    tag_proxy_model.sort(1, Qt.AscendingOrder)
+
     tag_item_model = QSqlRelationalTableModel()
     tag_item_model.setTable("tag_item")
     #tag_item_model.setRelation(1, QSqlRelation('nutrition', 'ndbno', 'desc'))
@@ -46,7 +51,8 @@ def init_tag(self):
     self.tv_tag.setModel(tag_model)
     #self.tv_tag_item.setModel(tag_item_model)
     self.tv_tag_hierarchy.setModel(tag_hier_model)
-    self.lv_tag.setModel(tag_model)
+    #ListView to choose which tags have nutrition
+    self.lv_tag.setModel(tag_proxy_model)
     self.lv_tag.setModelColumn(1)
 
     #self.tv_tag_item.setItemDelegate(QSqlRelationalDelegate(self.tv_tag_item))
@@ -83,7 +89,8 @@ def init_tag(self):
         self.selected_tags.clear()
         for tag in tags:
             print (tag.tag.name, tag.tag_id)
-            index = self.lv_tag.model().createIndex(tag.tag_id, 1)
+            orig_index = tag_model.createIndex(tag.tag_id, 1)
+            index = tag_proxy_model.mapFromSource(orig_index)
             if index.isValid():
                 print ("Valid index")
                 self.lv_tag.selectionModel().select(index,
@@ -96,7 +103,8 @@ def init_tag(self):
         print ("Saving tag item")
         selected_tags_now = set()
         for index in self.lv_tag.selectedIndexes():
-            record = self.lv_tag.model().record(index.row()) 
+            mapped = self.lv_tag.model().mapToSource(index)
+            record = tag_model.record(mapped.row()) 
             selected_tags_now.add(record.field("id").value())
             print (str(record.field("id").value()) + " - " +
                     record.field("name").value())
