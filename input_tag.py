@@ -27,6 +27,9 @@ def init_tag(self):
     tag_proxy_model.setSourceModel(tag_model)
     tag_proxy_model.sort(1, Qt.AscendingOrder)
 
+    self.tag_proxy_model = tag_proxy_model
+    self.tag_model = tag_model
+
     tag_item_model = QSqlRelationalTableModel()
     tag_item_model.setTable("tag_item")
     #tag_item_model.setRelation(1, QSqlRelation('nutrition', 'ndbno', 'desc'))
@@ -45,7 +48,7 @@ def init_tag(self):
     tag_hier_model.select()
 
 #From add food
-    self.cb_tag_select.setModel(tag_model)
+    self.cb_tag_select.setModel(tag_proxy_model)
     self.cb_tag_select.setModelColumn(1)
 
     self.tv_tag.setModel(tag_model)

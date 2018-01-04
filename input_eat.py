@@ -87,8 +87,16 @@ def init_add_eat(self):
                 self.price_proxy.setFilterRegExp("")
         #print ("Filters:", model_keys.filter(), model_keys.selectStatement())
 
-    def filter_add_nutrition(model_index):
-        record = self.cb_tag_select.model().record(model_index) 
+    def filter_add_nutrition(model_index_):
+        #print ("INPUT:", model_index_)
+        #Doesn't work with createIndex for some reason
+        model_index = self.tag_proxy_model.index(model_index_, 0)
+        #print ("made:", model_index.row(), model_index.isValid())
+        mapped_model_index = self.tag_proxy_model \
+                .mapToSource(model_index)
+        #print ("mapped:", mapped_model_index.row())
+        #mapped_model_index = model_index_
+        record = self.tag_model.record(mapped_model_index.row()) 
         print (record.field("id").value(), record.field("name").value())
         id = record.field("id").value()
 #Remove filter with IN in it
