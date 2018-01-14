@@ -3,7 +3,7 @@ import datetime
 
 from sqlalchemy import (
         Column, DateTime, Integer, Text, CHAR, Float,
-ForeignKey, Boolean, Date )
+ForeignKey, Boolean, Date, Table )
 from sqlalchemy.orm import relationship
 from sqlalchemy.ext.declarative import declarative_base
 
@@ -196,6 +196,18 @@ class FoodNutrition(Base, CalorieCalc):
             return self
         else:
             raise  NotImplementedError()
+
+class FoodNutritionDetails(Base):
+    __tablename__ = 'foodnutrition_details'
+    fn_id = Column(ForeignKey('foodnutrition.id'), primary_key=True,
+            nullable=False)
+    ndbno = Column(ForeignKey('nutrition.ndbno'), primary_key=True,
+            nullable=False)
+    weight = Column(Float, nullable=False)
+    foodnutrition = relationship("FoodNutrition")
+    nutrition = relationship("LocalNutrition")
+    #items = relationship("Item", backref="nutri_info")
+
 
 
 
@@ -415,6 +427,38 @@ class UsdaWeight(Base):
     gramwt = Column(Float)
     ndata = Column(Integer)
     stdev = Column(Float)
+
+
+t_foodnutrition_details_alias = Table(
+    'foodnutrition_details_alias', metadata,
+    Column('foodnutrition_details_fn_id', Integer, primary_key=True),
+    Column('foodnutrition_details_ndbno', Integer),
+    Column('foodnutrition_details_weight', Float),
+    Column('nutritionaliases_ingkey', Text)
+)
+"""SELECT foodnutrition_details.fn_id AS foodnutrition_details_fn_id, foodnutrition_details.ndbno AS foodnutrition_details_ndbno, foodnutrition_details.weight AS foodnutrition_details_weight, nutritionaliases.ingkey AS nutritionaliases_ingkey 
+FROM foodnutrition_details, nutritionaliases 
+WHERE foodnutrition_details.ndbno = nutritionaliases.ndbno
+"""
+
+
+t_foodnutrition_details_alias_time = Table(
+    'foodnutrition_details_alias_time', metadata,
+    Column('foodnutrition_details_weight', Float),
+    Column('nutritionaliases_ingkey', Text),
+    Column('eat_time', DateTime),
+    Column('foodnutrition_details_fn_id', Integer, primary_key=True),
+    Column('foodnutrition_details_ndbno', Integer)
+)
+
+"""SELECT foodnutrition_details.weight AS foodnutrition_details_weight, nutritionaliases.ingkey AS nutritionaliases_ingkey, eat.time AS eat_time,
+foodnutrition_details.fn_id AS foodnutrition_details_fn_id, foodnutrition_details.ndbno AS foodnutrition_details_ndbno 
+FROM foodnutrition_details, nutritionaliases, eat 
+WHERE foodnutrition_details.ndbno = nutritionaliases.ndbno AND
+foodnutrition_details.fn_id = eat.calc_nutrition
+"""
+class FoodNutritionDetailsTime(Base):
+    __table__ = t_foodnutrition_details_alias_time
 
 
 
