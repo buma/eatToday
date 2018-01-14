@@ -15,7 +15,9 @@ from database import (
         FoodNutrition,
         LocalNutrition,
         LocalNutritionaliase,
-        t_foodnutrition_details_alias_time
+        t_foodnutrition_details_alias_time,
+        Tag,
+        TagItem
         )
 engine = sqlalchemy.create_engine(connectString)
 Session = sessionmaker(bind=engine)
@@ -43,7 +45,30 @@ items = session.query(FoodNutritionDetailsTime.nutritionaliases_ingkey,
                 .group_by(FoodNutritionDetailsTime.foodnutrition_details_ndbno) \
                 .order_by(sqlalchemy.desc("weight_sum"))
 
-for amount, value, package_weight in items:
+#items1 = session.query(LocalNutritionaliase.ingkey,
+        #FoodNutritionDetails.weight*100, 
+        #Item.time) \
+       #.filter(FoodNutritionDetails.ndbno==LocalNutritionaliase.ndbno) \
+       #.filter(FoodNutritionDetails.fn_id==Item.calc_nutrition) \
+       #.filter(FoodNutritionDetails.ndbno==TagItem.ndbno) \
+       #.filter(Tag.id==TagItem.tag_id)
+items = session.query(Tag.name,
+        func.sum(FoodNutritionDetails.weight*100).label("weight_sum") 
+        ) \
+        .filter(Item.time.between( \
+            week_before.date(), now.date())) \
+       .filter(FoodNutritionDetails.ndbno==LocalNutritionaliase.ndbno) \
+       .filter(FoodNutritionDetails.fn_id==Item.calc_nutrition) \
+       .filter(FoodNutritionDetails.ndbno==TagItem.ndbno) \
+       .filter(Tag.id==TagItem.tag_id) \
+       .group_by(Tag.id) \
+       .order_by(sqlalchemy.desc("weight_sum"))
+
+print (items)
+#a=5/0
+
+for amount, value in items:
+    package_weight = None
     packages = 0
     if package_weight is not None:
         packages=value/package_weight
