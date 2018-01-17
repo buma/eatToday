@@ -208,6 +208,13 @@ class FoodNutritionDetails(Base):
     nutrition = relationship("LocalNutrition")
     #items = relationship("Item", backref="nutri_info")
 
+class FoodNutritionTags(Base):
+    __tablename__ = 'foodnutrition_tags'
+    fn_id = Column(ForeignKey('foodnutrition.id'), primary_key=True,
+            nullable=False)
+    foodnutrition = relationship("FoodNutrition")
+    tags = Column(Text(200))
+
 
 
 
