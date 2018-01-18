@@ -3,7 +3,7 @@ import datetime
 
 from sqlalchemy import (
         Column, DateTime, Integer, Text, CHAR, Float,
-ForeignKey, Boolean, Date, Table )
+ForeignKey, Boolean, Date, Table, text )
 from sqlalchemy.orm import relationship
 from sqlalchemy.ext.declarative import declarative_base
 
@@ -403,9 +403,10 @@ class Tag(Base):
 
     id = Column(Integer, primary_key=True)
     name = Column(Text(100))
+    main = Column(Boolean, server_default=text("0"))
 
     def __repr__(self):
-        return "<Tag {} {}>".format(self.id, self.name)
+        return "<Tag {} {} {}>".format(self.id, self.name, self.main)
 
 class TagItem(Base):
     __tablename__ = 'tag_item'
