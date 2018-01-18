@@ -184,20 +184,45 @@ def init_add_eat(self):
         try:
             if nutrition is not None:
                 nutrition = sort_nutrition_string(nutrition)
+            preparing_time = self.preparingTimeSpinBox.value()
+            preparing_time = None if preparing_time == 0 else preparing_time
+            cooking_time = self.cookingTimeSpinBox.value()
+            cooking_time = None if cooking_time == 0 else cooking_time
+            eating_time = self.eatingTimeSpinBox.value()
+            eating_time = None if eating_time == 0 else eating_time
             item = Item(description=desc, nutrition=nutrition,
                     time=self.d_edit.dateTime().toPyDateTime(),
-                    type=self.cb_type.currentText())
+                    type=self.cb_type.currentText(),
+                    recipe_in_gourmet=self.cb_gourmet.isChecked(),
+                    prep_supervision=self.cb_supervision.isChecked(),
+                    buku_recipe_id = int(self.le_recipe_id.text()) if self.le_recipe_id.isModified() else None
+                    )
+
+            print(item)
+            print("In GOURMET:{}, prep_supe:{}, recipe ID:{}".format(item.recipe_in_gourmet, item.prep_supervision, item.buku_recipe_id))
+            print ("PREP:{}, COOK:{}, EAT:{}".format(preparing_time, cooking_time, eating_time))
             add_data(1, str(self.d_edit.dateTime().toPyDateTime()))
             add_data(2, self.cb_type.currentText())
             add_data(3, desc)
             add_data(4, nutrition)
-            print(item)
+            add_data(6, preparing_time)
+            add_data(7, cooking_time)
+            add_data(8, eating_time)
+            add_data(9, item.prep_supervision)
+            add_data(10, item.recipe_in_gourmet)
+            add_data(11, item.buku_recipe_id)
             if not model.submitAll():
                 raise Exception(model.lastError().text())
             #self.session.merge(item)
             #self.session.commit()
             self.le_description.setText("")
             self.le_nutrition.setText("")
+            self.cb_gourmet.setChecked(False)
+            self.cb_supervision.setChecked(True)
+            self.le_recipe_id.setText("")
+            self.preparingTimeSpinBox.setValue(0)
+            self.eatingTimeSpinBox.setValue(0)
+            self.cookingTimeSpinBox.setValue(0)
         except Exception as e:
             iostream = io.StringIO();
             #Shows error dialog:

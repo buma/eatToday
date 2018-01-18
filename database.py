@@ -66,11 +66,18 @@ class Item(Base):
     cooking_time = Column(Integer)
     eating_time = Column(Integer)
     prep_supervision = Column(Boolean, server_default="1")
+    recipe_in_gourmet = Column(Boolean, nullable=False, server_default=text("0"))
+    buku_recipe_id = Column(Integer)
 
-    def __init__(self, type, description, nutrition, time=None):
+
+    def __init__(self, type, description, nutrition, time=None,
+            recipe_in_gourmet=None, prep_supervision=True, buku_recipe_id=None):
         self.type = type
         self.description = description
         self.nutrition = nutrition
+        self.recipe_in_gourmet = recipe_in_gourmet
+        self.prep_supervision = prep_supervision
+        self.buku_recipe_id = buku_recipe_id
         if time is None:
             self.time = datetime.datetime.now()
         else:
