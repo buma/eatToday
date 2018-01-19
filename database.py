@@ -3,7 +3,7 @@ import datetime
 
 from sqlalchemy import (
         Column, DateTime, Integer, Text, CHAR, Float,
-ForeignKey, Boolean, Date, Table, text )
+ForeignKey, Boolean, Date, Table, text, Index )
 from sqlalchemy.orm import relationship
 from sqlalchemy.ext.declarative import declarative_base
 
@@ -430,6 +430,32 @@ class TagHierarchy(Base):
 
     tag_id = Column(ForeignKey('tag.id'), primary_key=True)
     child_tag_id = Column(ForeignKey('tag.id'), primary_key=True)
+
+class FoodTag(Base):
+    __tablename__ = 'food_tag'
+
+    id = Column(Integer, primary_key=True)
+    name = Column(Text(100))
+    #main = Column(Boolean, server_default=text("0"))
+
+    def __repr__(self):
+        return "<FoodTag {} {}>".format(self.id, self.name)
+
+class FoodTagItem(Base):
+    __tablename__ = 'food_tag_item'
+    __table_args__ = (
+        Index('Unique foodnutrition tag', 'fn_id', 'tag_id', unique=True),
+    )
+
+
+    id = Column(Integer, primary_key=True)
+    fn_id = Column(ForeignKey('foodnutrition.id'))
+    tag_id = Column(ForeignKey('food_tag.id'))
+    item_id = Column(ForeignKey('eat.id'))
+    
+    foodnutrition = relationship('FoodNutrition')
+    tag = relationship('FoodTag')
+    item = relationship('Item')
 
 class UsdaWeight(Base):
     __tablename__ = 'usda_weights'
