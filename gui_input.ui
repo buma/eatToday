@@ -326,6 +326,44 @@
         </item>
        </layout>
       </widget>
+      <widget class="QWidget" name="tab_edit_eat">
+       <attribute name="title">
+        <string>Edit Eat</string>
+       </attribute>
+       <layout class="QVBoxLayout" name="verticalLayout_18">
+        <item>
+         <layout class="QHBoxLayout" name="horizontalLayout_2">
+          <item>
+           <widget class="QRadioButton" name="rb_eat">
+            <property name="text">
+             <string>Edit eat</string>
+            </property>
+            <property name="checked">
+             <bool>true</bool>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <widget class="QRadioButton" name="rb_eat_tags">
+            <property name="text">
+             <string>Edit food tags</string>
+            </property>
+           </widget>
+          </item>
+         </layout>
+        </item>
+        <item>
+         <widget class="QTableView" name="tv_eat_view"/>
+        </item>
+        <item>
+         <widget class="QDialogButtonBox" name="buttonBox_edit_eat">
+          <property name="standardButtons">
+           <set>QDialogButtonBox::Reset|QDialogButtonBox::Save</set>
+          </property>
+         </widget>
+        </item>
+       </layout>
+      </widget>
       <widget class="QWidget" name="tab_add_nutrition">
        <attribute name="title">
         <string>Add Nutrition</string>
@@ -792,8 +830,8 @@
             <rect>
              <x>0</x>
              <y>0</y>
-             <width>98</width>
-             <height>28</height>
+             <width>100</width>
+             <height>30</height>
             </rect>
            </property>
            <attribute name="label">
@@ -810,8 +848,8 @@
             <rect>
              <x>0</x>
              <y>0</y>
-             <width>98</width>
-             <height>28</height>
+             <width>100</width>
+             <height>30</height>
             </rect>
            </property>
            <attribute name="label">

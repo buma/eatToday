@@ -24,6 +24,7 @@ import input_best_before as i_bb
 import input_tag as i_t
 import input_nutrition as i_n
 import input_eat as i_e
+import input_eat_edit as i_e_e
 
 class MainWindow(QMainWindow, Ui_MainWindow):
 
@@ -62,6 +63,9 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         self.init_price()
         self.init_tag()
         self.init_chart()
+        self.init_edit_eat()
+
+        self.tabWidget.currentChanged.connect(self.tabWidgetTabChanged)
 
 
     def init_add_eat(self):
@@ -75,6 +79,9 @@ class MainWindow(QMainWindow, Ui_MainWindow):
 
     def init_price(self):
         i_p.init_price(self)
+
+    def init_edit_eat(self):
+        i_e_e.init_edit_eat(self)
 
     """Initializes Qt DB connection"""
     def init_db(self):
@@ -104,4 +111,9 @@ class MainWindow(QMainWindow, Ui_MainWindow):
 
     def init_chart(self):
         i_c.init_chart(self)
+
+    def tabWidgetTabChanged(self, tabIndex):
+        print("Tab switched to {}".format(tabIndex))
+        if tabIndex == 1:
+            i_e_e.start(self)
 
