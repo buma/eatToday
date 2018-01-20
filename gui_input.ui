@@ -6,7 +6,7 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>673</width>
+    <width>622</width>
     <height>614</height>
    </rect>
   </property>
@@ -18,7 +18,7 @@
     <item>
      <widget class="QTabWidget" name="tabWidget">
       <property name="currentIndex">
-       <number>0</number>
+       <number>1</number>
       </property>
       <widget class="QWidget" name="tab_add">
        <attribute name="title">
@@ -347,6 +347,23 @@
            <widget class="QRadioButton" name="rb_eat_tags">
             <property name="text">
              <string>Edit food tags</string>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <widget class="QPushButton" name="pb_editTags">
+            <property name="enabled">
+             <bool>false</bool>
+            </property>
+            <property name="text">
+             <string>Edit tags</string>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <widget class="QLineEdit" name="le_eat_tags">
+            <property name="enabled">
+             <bool>false</bool>
             </property>
            </widget>
           </item>
@@ -697,7 +714,7 @@
             <rect>
              <x>0</x>
              <y>0</y>
-             <width>633</width>
+             <width>582</width>
              <height>420</height>
             </rect>
            </property>
@@ -866,7 +883,7 @@
             <rect>
              <x>0</x>
              <y>0</y>
-             <width>633</width>
+             <width>582</width>
              <height>369</height>
             </rect>
            </property>
@@ -906,7 +923,7 @@
     <rect>
      <x>0</x>
      <y>0</y>
-     <width>673</width>
+     <width>622</width>
      <height>20</height>
     </rect>
    </property>
@@ -942,6 +959,38 @@
     <hint type="destinationlabel">
      <x>200</x>
      <y>76</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>rb_eat_tags</sender>
+   <signal>toggled(bool)</signal>
+   <receiver>pb_editTags</receiver>
+   <slot>setEnabled(bool)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>153</x>
+     <y>77</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>253</x>
+     <y>77</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>rb_eat_tags</sender>
+   <signal>toggled(bool)</signal>
+   <receiver>le_eat_tags</receiver>
+   <slot>setEnabled(bool)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>153</x>
+     <y>77</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>450</x>
+     <y>77</y>
     </hint>
    </hints>
   </connection>
