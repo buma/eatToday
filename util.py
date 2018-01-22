@@ -4,6 +4,7 @@ import math
 
 import dateutil.relativedelta
 from sqlalchemy.orm.exc import NoResultFound
+from sqlalchemy import func
 from database import (
         Item,
         LocalNutrition,
@@ -513,6 +514,25 @@ def rename(from_n, to_n, session):
         nutri.nutrition = sort_nutrition_string(replaced)
         nutri.calc_nutrition = None
         print (nutri)
+
+def show_tags(session, foodgroup=None):
+    """Shows nutrition tags
+
+    Can filter them by foodgroup"""
+    nutrition_tags = session.query(LocalNutritionaliase.ingkey,
+		 LocalNutrition.desc, func.group_concat(Tag.name)) \
+        .filter(TagItem.ndbno==LocalNutrition.ndbno) \
+	.filter(Tag.id==TagItem.tag_id) \
+        .filter(LocalNutritionaliase.ndbno==LocalNutrition.ndbno) 
+    if foodgroup is not None:
+        nutrition_tags = nutrition_tags \
+            .filter(LocalNutrition.foodgroup==foodgroup) 
+    nutrition_tags = nutrition_tags \
+	.group_by(LocalNutrition.ndbno) \
+        .order_by(LocalNutritionaliase.ingkey)
+    for ingkey, desc, tags in nutrition_tags:
+        print(ingkey, " || ", desc)
+        print("   ", tags)
 
 def add_tag(foodgroup, tag, session):
     """Add new tag_items based on foodgroup
