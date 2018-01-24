@@ -25,6 +25,7 @@ import input_tag as i_t
 import input_nutrition as i_n
 import input_eat as i_e
 import input_eat_edit as i_e_e
+import input_view_eat as i_v_e
 
 class MainWindow(QMainWindow, Ui_MainWindow):
 
@@ -64,6 +65,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         self.init_tag()
         self.init_chart()
         self.init_edit_eat()
+        self.init_view_eat()
 
         self.tabWidget.currentChanged.connect(self.tabWidgetTabChanged)
 
@@ -82,6 +84,9 @@ class MainWindow(QMainWindow, Ui_MainWindow):
 
     def init_edit_eat(self):
         i_e_e.init_edit_eat(self)
+
+    def init_view_eat(self):
+        i_v_e.init_view_eat(self)
 
     """Initializes Qt DB connection"""
     def init_db(self):
