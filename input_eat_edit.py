@@ -27,12 +27,20 @@ def fill_food_tags_model():
     global eating_model
     eating_model = QSqlQueryModel()
     eating_model.setQuery("""
-    SELECT foodnutrition.id as fn_id, min(eat.id) as eat_id, eat.description
+SELECT foodnutrition.id AS fn_id,
+       min(eat.id) AS eat_id,
+       tags,
+       eat.description
 FROM foodnutrition
-JOIN eat ON
-eat.calc_nutrition == foodnutrition.id
+JOIN eat ON eat.calc_nutrition == foodnutrition.id
+LEFT JOIN
+  ( SELECT group_concat(food_tag.name) AS "tags",
+           food_tag_item.fn_id AS ffn_id
+   FROM food_tag_item
+   JOIN food_tag ON food_tag.id == food_tag_item.tag_id
+   GROUP BY food_tag_item.fn_id) ON ffn_id ==foodnutrition.id
 GROUP BY foodnutrition.id
-order by eat.description
+ORDER BY eat.description
     """)
     
 
