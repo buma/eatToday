@@ -16,7 +16,7 @@ from luqum.utils import UnknownOperationResolver, LuceneTreeVisitorV2
 resolver = UnknownOperationResolver()
 #str(resolver(tree))
 
-from database import Item
+from database import Item, FoodNutrition
 """
 
 HAS NUTRITION TAHINI
@@ -53,6 +53,7 @@ WHERE eat.id < :mojid
 
 table_name_sql = {}
 table_name_sql["eat"] = Item
+table_name_sql["foodnutrition"] = FoodNutrition
 
 
 table_columns = {}
@@ -194,13 +195,18 @@ for n in self.simplify_if_same(node.children, node)]
             else:
                 return date_parse(val, yearfirst=True)
 
-        low_t = get_dt_val(node.low.value)
-        high_t = get_dt_val(node.high.value)
-        if type(low_t) == int:
-            return cast(func.strftime("%H", context["column"]),
-                    Integer).between(low_t, high_t)
+        #FIXME: compare with types not strings
+        if str(context["column"].type) == "DATETIME":
+            low_t = get_dt_val(node.low.value)
+            high_t = get_dt_val(node.high.value)
+            if type(low_t) == int:
+                return cast(func.strftime("%H", context["column"]),
+                        Integer).between(low_t, high_t)
         else:
-            return context["column"].between(low_t, high_t)
+            low_t = node.low.value
+            high_t = node.high.value
+
+        return context["column"].between(low_t, high_t)
 
     def visit_phrase(self, node, parents, context):
         print ("P", node.value)
@@ -232,6 +238,8 @@ for n in self.simplify_if_same(node.children, node)]
                         continue
                 yield item[0][1] == item[1] # bindparam(item[0], value=item[1])
         s = select(list(self.tables))
+        if Item in self.tables and FoodNutrition in self.tables:
+            s = s.where(Item.calc_nutrition==FoodNutrition.id)
         s = s.where(visited)
         print (s)
         print (s.compile().params)
@@ -301,6 +309,7 @@ if __name__ == "__main__":
     #query = ('type:HRAN?')
     query = ('type:HRANA time:[T10 TO T12]')
     query = ('type:HRANA time:[2017-10-05 TO 2017-12-06]')
+    query = ('kcal:[100 TO 300] time:[18 TO 21]')
     tree = parser.parse(query)
     rtree = resolver(tree)
     print("REPR:", repr(rtree))
