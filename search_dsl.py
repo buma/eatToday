@@ -1,5 +1,5 @@
 import itertools
-from collections import defaultdict
+from collections import defaultdict, Counter
 
 from sqlalchemy.sql import select, and_, or_, not_, bindparam, literal_column
 from sqlalchemy.dialects import sqlite
@@ -213,10 +213,72 @@ for n in self.simplify_if_same(node.children, node)]
         return str(s.compile(compile_kwargs={"literal_binds":True},
             dialect=sqlite.dialect()))
 
+class GraphVizitor(object):
+
+    def __init__(self):
+        self.G = pgv.AGraph(directed=True, strict=False)
+        self.node_ids = Counter()
+
+    def _get_id(self, class_name):
+        cc = GraphVizitor._camel_to_lower(class_name)
+        self.node_ids[cc]+=1
+        return "{}{}".format(cc, self.node_ids[cc])
+
+
+    @staticmethod
+    def _camel_to_lower(name):
+        return "".join(
+                "_" + w.lower() if w.isupper() else w.lower()
+                for w in name).lstrip("_")
+
+
+    def visit(self, node, parents=None):
+        class_name =  node.__class__.mro()[0].__name__
+        label = class_name
+        if "value" in vars(node):
+            label+="\n"+vars(node)["value"]
+        elif "name" in vars(node):
+            label+="\n"+vars(node)["name"]
+        elif "include_low" in vars(node):
+            v = vars(node)
+            if v["include_low"]:
+                L="["
+            else:
+                L="{"
+            if v["include_high"]:
+                R="]"
+            else:
+                R="}"
+
+            label="{}{}{}".format(L,label,R)
+
+        id_ = self._get_id(class_name)
+        #print ("IN:", type(node), id_,  node)
+        self.G.add_node(id_, label=label)
+        parents = parents or []
+        #print ("PARENTS:", [type(x) for x in parents])
+        for child in node.children:
+            cid = self.visit(child, parents + [node])
+            self.G.add_edge(id_, cid)
+        return id_
+
+    def graph(self, filename="graph.png"):
+        #self.G.layout()
+        self.G.draw(filename, prog="dot")
+
 if __name__ == "__main__":
+    import pygraphviz as pgv
     visitor = SQLTransformer()
 #tree = parser.parse('nutrition:(TAHINI MILLET) NOT tag:"PALACINKE" OR nutrition:red')
     #query = 'nutrition:(TAHINI~ MILLET) NOT description:"PALACINKE" OR nutrition:red'
-    query = ('description:palačinke~ type:HRANA')
+    #query = ('description:palačinke~ type:HRANA')
     #query = ('type:HRAN?')
-    print (visitor.get_sql(query))
+    query = ('type:HRANA time:[T10 TO T12]')
+    #print (visitor.get_sql(query))
+    query = '(title:"foo bar" AND body:"quick fox") OR title:fox'
+    tree = parser.parse(query)
+    rtree = resolver(tree)
+    print("REPR:", repr(rtree))
+    gv = GraphVizitor()
+    gv.visit(rtree)
+    gv.graph("graph.png")
