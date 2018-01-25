@@ -131,15 +131,15 @@ class SQLTransformer(LuceneTreeVisitorV2):
                 yield child
 
     def visit_and_operation(self, *args, **kwargs):
-        return self._binary_operation("AND", *args, **kwargs)
+        return self._binary_operation(and_, *args, **kwargs)
     
     def visit_or_operation(self, *args, **kwargs):
-        return self._binary_operation("OR", *args, **kwargs)
+        return self._binary_operation(or_, *args, **kwargs)
 
     def visit_not(self, node, parents, context):
         items = [self.visit(n, parents + [node], context)
 for n in self.simplify_if_same(node.children, node)]
-        return ("NOT", items)
+        return not_(*items)
 
     def _binary_operation(self, op_type, node, parents, context):
         children = self.simplify_if_same(node.children, node)
@@ -147,7 +147,7 @@ for n in self.simplify_if_same(node.children, node)]
         items = [self.visit(child, parents + [node], context) for child in
                  children]
         #print ("ITEMS:", items)
-        return (op_type, items)
+        return op_type(*items)
 
     def visit_search_field(self, node, parents, context):
         child_context = dict(context) if context is not None else {}
@@ -156,10 +156,11 @@ for n in self.simplify_if_same(node.children, node)]
         print ("NAME:", name, table)
         #print ("PARENTS:", type(parents[-1]))
         cur_field = self.fields.get(name, [])
+        child_context["column"] = column
         enode = self.visit(node.children[0], parents + [node], child_context)
         cur_field.append(enode)
         self.fields[name] = cur_field
-        return ((name, column), enode)
+        return enode 
 
     def visit_field_group(self, node, parents, context):
         fields = self.visit(node.expr, parents + [node], context)
@@ -168,16 +169,28 @@ for n in self.simplify_if_same(node.children, node)]
 
     def visit_word(self, node, parents, context):
         print ("W", node.value)
-        return node.value #.replace("*", "%").replace("?", "_")
+        if context.get("fuzzy", False):
+            return context["column"].contains(node.value)
+        elif "*" in node.value or "?" in node.value:
+            value = node.value.replace("*", "%").replace("?", "_")
+            return context["column"].like(value)
+
+        #print ("CONTEXT:", context)
+        return context["column"] == node.value 
     def visit_phrase(self, node, parents, context):
         print ("P", node.value)
-        return node.value
+        #return node.value
+        return context["column"] == node.value #.replace("*", "%").replace("?", "_")
 
     def visit_fuzzy(self, node, parents, context):
-        eword = self.visit(node.term, parents + [node], context)
-        return ("CONTAINS", eword)
+        child_context = dict(context) if context is not None else {}
+        child_context["fuzzy"]=True
+        eword = self.visit(node.term, parents + [node], child_context)
+        return eword
+        #return ("CONTAINS", eword)
 
     def get_sql(self, query):
+        print ("QUERY:", query)
         self.fields = {}
         self.tables = set()
         tree = parser.parse(query)
@@ -194,13 +207,7 @@ for n in self.simplify_if_same(node.children, node)]
                         continue
                 yield item[0][1] == item[1] # bindparam(item[0], value=item[1])
         s = select(list(self.tables))
-
-        if visited[0] == "AND":
-            s = s.where(and_ (*get_items(visited[1])))
-        elif visited[0] == "OR":
-            s = s.where(or_ (*get_items(visited[1])))
-        else:
-            s = s.where(*get_items([visited]))
+        s = s.where(visited)
         print (s)
         print (s.compile().params)
         return str(s.compile(compile_kwargs={"literal_binds":True},
@@ -209,6 +216,7 @@ for n in self.simplify_if_same(node.children, node)]
 if __name__ == "__main__":
     visitor = SQLTransformer()
 #tree = parser.parse('nutrition:(TAHINI MILLET) NOT tag:"PALACINKE" OR nutrition:red')
-    #query = ('description:palačinke~ type:HRANA')
-    query = ('type:HRANA')
+    #query = 'nutrition:(TAHINI~ MILLET) NOT description:"PALACINKE" OR nutrition:red'
+    query = ('description:palačinke~ type:HRANA')
+    #query = ('type:HRAN?')
     print (visitor.get_sql(query))
