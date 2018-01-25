@@ -1,7 +1,7 @@
 import itertools
 from collections import defaultdict
 
-from sqlalchemy.sql import select, and_, or_,bindparam, literal_column
+from sqlalchemy.sql import select, and_, or_, not_, bindparam, literal_column
 from sqlalchemy.dialects import sqlite
 
 from luqum.parser import parser
@@ -93,7 +93,8 @@ def validate_field(name):
                     format(column))
         elif column in columns_table:
             return "{}.{}".format(columns_table[column],column), \
-            table_name_sql[columns_table[column]]
+            table_name_sql[columns_table[column]], \
+            table_name_sql[columns_table[column]].__table__.columns[column]
         else:
             raise InvalidField("FIELD {} is not known column".
                     format(column))
@@ -104,7 +105,8 @@ def validate_field(name):
         if column not in current_table_columns:
             raise InvalidField("Column {} is not in {} table".format(column,
                 table))
-        return name, table_name_sql[table]
+        return name, table_name_sql[table], \
+    table_name_sql[table].__table__.columns[column]
 
 class SQLTransformer(LuceneTreeVisitorV2):
 
@@ -149,7 +151,7 @@ for n in self.simplify_if_same(node.children, node)]
 
     def visit_search_field(self, node, parents, context):
         child_context = dict(context) if context is not None else {}
-        name, table = validate_field(node.name)
+        name, table, column = validate_field(node.name)
         self.tables.add(table)
         print ("NAME:", name, table)
         #print ("PARENTS:", type(parents[-1]))
@@ -157,7 +159,7 @@ for n in self.simplify_if_same(node.children, node)]
         enode = self.visit(node.children[0], parents + [node], child_context)
         cur_field.append(enode)
         self.fields[name] = cur_field
-        return (name, enode)
+        return ((name, column), enode)
 
     def visit_field_group(self, node, parents, context):
         fields = self.visit(node.expr, parents + [node], context)
@@ -180,17 +182,17 @@ for n in self.simplify_if_same(node.children, node)]
         self.tables = set()
         tree = parser.parse(query)
         rtree = resolver(tree)
-        print(repr(rtree))
+        print("REPR:", repr(rtree))
         visited = (self.visit(rtree))
-        print (visited)
+        print ("VISITED:", visited)
         def get_items(raw_items):
             for item in raw_items:
                 print (item)
                 if type(item[1]) is tuple:
                     if item[1][0] == "CONTAINS":
-                        yield Item.__table__.columns[item[0].split(".")[1]].contains(item[1][1])
+                        yield item[0][1].contains(item[1][1])
                         continue
-                yield literal_column(item[0]) == item[1] # bindparam(item[0], value=item[1])
+                yield item[0][1] == item[1] # bindparam(item[0], value=item[1])
         s = select(list(self.tables))
 
         if visited[0] == "AND":
