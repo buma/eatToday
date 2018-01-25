@@ -1,8 +1,13 @@
 import itertools
 from collections import defaultdict, Counter
 
-from sqlalchemy.sql import select, and_, or_, not_, bindparam, literal_column
+from sqlalchemy import Integer
+from sqlalchemy.sql import (
+        select, and_, or_, not_, cast, func
+        )
 from sqlalchemy.dialects import sqlite
+
+from dateutil.parser import parse as date_parse
 
 from luqum.parser import parser
 from luqum.pretty import prettify
@@ -177,6 +182,26 @@ for n in self.simplify_if_same(node.children, node)]
 
         #print ("CONTEXT:", context)
         return context["column"] == node.value 
+
+    def visit_range(self, node, parents, context):
+        #TODO: add NOW/TODAY and * for unlimited from/to part of range
+        def get_dt_val(val):
+            if len(val) <= 3:
+                if val[0] == "T":
+                    return int(val[1:])
+                else:
+                    return int(val)
+            else:
+                return date_parse(val, yearfirst=True)
+
+        low_t = get_dt_val(node.low.value)
+        high_t = get_dt_val(node.high.value)
+        if type(low_t) == int:
+            return cast(func.strftime("%H", context["column"]),
+                    Integer).between(low_t, high_t)
+        else:
+            return context["column"].between(low_t, high_t)
+
     def visit_phrase(self, node, parents, context):
         print ("P", node.value)
         #return node.value
@@ -269,16 +294,17 @@ class GraphVizitor(object):
 if __name__ == "__main__":
     import pygraphviz as pgv
     visitor = SQLTransformer()
+    gv = GraphVizitor()
 #tree = parser.parse('nutrition:(TAHINI MILLET) NOT tag:"PALACINKE" OR nutrition:red')
     #query = 'nutrition:(TAHINI~ MILLET) NOT description:"PALACINKE" OR nutrition:red'
     #query = ('description:palačinke~ type:HRANA')
     #query = ('type:HRAN?')
     query = ('type:HRANA time:[T10 TO T12]')
-    #print (visitor.get_sql(query))
-    query = '(title:"foo bar" AND body:"quick fox") OR title:fox'
+    query = ('type:HRANA time:[2017-10-05 TO 2017-12-06]')
     tree = parser.parse(query)
     rtree = resolver(tree)
     print("REPR:", repr(rtree))
-    gv = GraphVizitor()
     gv.visit(rtree)
     gv.graph("graph.png")
+    print (visitor.get_sql(query))
+    query = '(title:"foo bar" AND body:"quick fox") OR title:fox'
