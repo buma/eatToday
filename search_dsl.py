@@ -4,7 +4,7 @@ from collections import defaultdict, Counter
 
 from sqlalchemy import Integer
 from sqlalchemy.sql import (
-        select, and_, or_, not_, cast, func
+        select, and_, or_, not_, cast, func, join
         )
 from sqlalchemy.dialects import sqlite
 
@@ -17,7 +17,12 @@ from luqum.utils import UnknownOperationResolver, LuceneTreeVisitorV2
 resolver = UnknownOperationResolver()
 #str(resolver(tree))
 
-from database import Item, FoodNutrition
+from database import (
+        Item,
+        FoodNutrition,
+        LocalNutritionaliase,
+        FoodNutritionDetails
+        )
 """
 
 HAS NUTRITION TAHINI
@@ -55,6 +60,8 @@ WHERE eat.id < :mojid
 table_name_sql = {}
 table_name_sql["eat"] = Item
 table_name_sql["foodnutrition"] = FoodNutrition
+table_name_sql["nutritionaliases"] = LocalNutritionaliase
+table_name_sql["foodnutrition_details"] = FoodNutritionDetails
 
 
 table_columns = {}
@@ -72,6 +79,8 @@ columns_table_raw = defaultdict(list)
 for table, columns in table_columns.items():
     for column in columns:
         columns_table_raw[column].append(table)
+
+#columns_table_raw["has_ingkey"] = ["foodnutrition_details"]
 
 columns_table = {}
 ambiguous_columns = set()
@@ -120,6 +129,11 @@ class SQLTransformer(LuceneTreeVisitorV2):
     def __init__(self):
         self.fields = {}
         self.tables = set()
+        self.joins = []
+        self.has_ingkey_join = False
+        self.having = None
+        self.group_by = None
+        self.where = []
 
 
     def simplify_if_same(self, children, current_node):
@@ -138,27 +152,51 @@ class SQLTransformer(LuceneTreeVisitorV2):
                 yield child
 
     def visit_and_operation(self, *args, **kwargs):
-        return self._binary_operation(and_, *args, **kwargs)
+        return self._binary_operation("AND", *args, **kwargs)
     
     def visit_or_operation(self, *args, **kwargs):
-        return self._binary_operation(or_, *args, **kwargs)
+        return self._binary_operation("OR", *args, **kwargs)
 
     def visit_not(self, node, parents, context):
         items = [self.visit(n, parents + [node], context)
 for n in self.simplify_if_same(node.children, node)]
         return not_(*items)
 
-    def _binary_operation(self, op_type, node, parents, context):
+    def _binary_operation(self, op_type_name, node, parents, context):
+        if op_type_name == "AND":
+            op_type = and_
+        else:
+            op_type = or_
         children = self.simplify_if_same(node.children, node)
         #children = node.children
         items = [self.visit(child, parents + [node], context) for child in
                  children]
-        #print ("ITEMS:", items)
+        if "column" in context:
+            if context.get("in", False):
+                print ("ITEMS:", items)
+                if op_type_name == "AND":
+                    self.having = func.count(FoodNutrition.id) == \
+                        len(items)
+                return op_type(context["column"].in_(items))
         return op_type(*items)
 
     def visit_search_field(self, node, parents, context):
         child_context = dict(context) if context is not None else {}
-        name, table, column = validate_field(node.name)
+        if node.name.startswith("has_"):
+            p_name = node.name[4:]
+            self.joins.append(join(FoodNutritionDetails, LocalNutritionaliase,
+                FoodNutritionDetails.ndbno==LocalNutritionaliase.ndbno))
+            #self.joins.append(join(FoodNutritionDetails, FoodNutrition,
+                #FoodNutritionDetails.fn_id==FoodNutrition.id))
+            self.where.append(FoodNutritionDetails.fn_id==FoodNutrition.id)
+            child_context["in"] = True
+            if node.name == "has_ingkey":
+                self.has_ingkey_join = True
+                self.group_by = FoodNutrition.id
+            #self.tables.add(FoodNutrition)
+        else:
+            p_name = node.name
+        name, table, column = validate_field(p_name)
         self.tables.add(table)
         print ("NAME:", name, table)
         #print ("PARENTS:", type(parents[-1]))
@@ -183,6 +221,8 @@ for n in self.simplify_if_same(node.children, node)]
             return context["column"].like(value)
 
         #print ("CONTEXT:", context)
+        if context.get("in", False):
+            return node.value
         return context["column"] == node.value 
 
     def visit_range(self, node, parents, context):
@@ -251,6 +291,45 @@ for n in self.simplify_if_same(node.children, node)]
         return eword
         #return ("CONTAINS", eword)
 
+    def get_columns(self):
+
+        def column_filter(column):
+            ignored_columns = set([
+                "ash",
+                "magnesium","phosphorus", "potassium",
+                "sodium","zinc", "copper",
+                "manganese","selenium",
+                "vitaminc","thiamin",
+                "riboflavin","niacin",
+                "pantoacid","vitaminb6",
+                "folatetotal","folateacid",
+                "foodfolate","folatedfe",
+                "choline","vitb12",
+                "vitaiu","vitarae",
+                "retinol","alphac",
+                "betac","betacrypt",
+                "lypocene","lutzea",
+                "vite","vitk", "fasat",
+                "famono","fapoly",
+                "cholestrl", "density_equivalent"
+                ])
+            return column.name not in ignored_columns
+        print ("TABLES:", self.tables)
+        print ("JOINS:", [str(x) for x in self.joins])
+        if len(self.tables) == 1 and len(self.joins) == 0:
+            return list(self.tables)
+        if len(self.tables) > 1:
+            return list(filter(column_filter, itertools.chain(*(x.__table__.columns for x in
+                self.tables))))
+        if self.has_ingkey_join:
+            return list(filter(column_filter, FoodNutrition.__table__.columns))
+
+    def make_joins(self):
+        if Item in self.tables and FoodNutrition in self.tables:
+            self.joins.append(join(FoodNutrition, Item,
+                    Item.calc_nutrition==FoodNutrition.id))
+
+
     def get_sql(self, query):
         print ("QUERY:", query)
         self.fields = {}
@@ -260,18 +339,19 @@ for n in self.simplify_if_same(node.children, node)]
         print("REPR:", repr(rtree))
         visited = (self.visit(rtree))
         print ("VISITED:", visited)
-        def get_items(raw_items):
-            for item in raw_items:
-                print (item)
-                if type(item[1]) is tuple:
-                    if item[1][0] == "CONTAINS":
-                        yield item[0][1].contains(item[1][1])
-                        continue
-                yield item[0][1] == item[1] # bindparam(item[0], value=item[1])
-        s = select(list(self.tables))
-        if Item in self.tables and FoodNutrition in self.tables:
-            s = s.where(Item.calc_nutrition==FoodNutrition.id)
+        self.make_joins()
+        columns = self.get_columns()
+        print ("COLUMNS:", columns)
+        s = select(columns)
+        for join in self.joins:
+            s = s.select_from(join)
+        if self.where:
+            s = s.where(*self.where)
         s = s.where(visited)
+        if self.having is not None:
+            s = s.having(self.having)
+        if self.group_by is not None:
+            s = s.group_by(self.group_by)
         print (s)
         print (s.compile().params)
         return str(s.compile(compile_kwargs={"literal_binds":True},
@@ -337,12 +417,14 @@ if __name__ == "__main__":
 #tree = parser.parse('nutrition:(TAHINI MILLET) NOT tag:"PALACINKE" OR nutrition:red')
     #query = 'nutrition:(TAHINI~ MILLET) NOT description:"PALACINKE" OR nutrition:red'
     #query = ('description:palačinke~ type:HRANA')
-    #query = ('type:HRAN?')
     query = ('type:HRANA time:[T10 TO T12]')
     query = ('type:HRANA time:[2017-10-05 TO 2017-12-06]')
-    query = ('kcal:[100 TO 300] time:[18 TO 21]')
     query = ('kcal:[* TO 300] time:[18 TO *] time:[2017-10-05 TO *]')
     query = ('kcal:[100 TO 300] time:[TODAY TO NOW]')
+    query = ('has_ingkey:(TAHINI MILLET_COOKED)')
+    #query = ('ingkey:TAHINI')
+    #query = ('type:HRAN?')
+    #query = ('kcal:[100 TO 300] time:[18 TO 21]')
     tree = parser.parse(query)
     rtree = resolver(tree)
     print("REPR:", repr(rtree))
