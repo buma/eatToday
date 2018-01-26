@@ -186,7 +186,6 @@ for n in self.simplify_if_same(node.children, node)]
         return context["column"] == node.value 
 
     def visit_range(self, node, parents, context):
-        #TODO: add NOW/TODAY 
         def get_val(val):
             if val == "*":
                 return None
@@ -194,6 +193,10 @@ for n in self.simplify_if_same(node.children, node)]
         def get_dt_val(val):
             if val is None:
                 return None
+            if val.upper() == "TODAY":
+                return datetime.datetime.now().date()
+            elif val.upper() == "NOW":
+                return datetime.datetime.now()
             if len(val) <= 3:
                 if val[0] == "T":
                     return int(val[1:])
@@ -339,6 +342,7 @@ if __name__ == "__main__":
     query = ('type:HRANA time:[2017-10-05 TO 2017-12-06]')
     query = ('kcal:[100 TO 300] time:[18 TO 21]')
     query = ('kcal:[* TO 300] time:[18 TO *] time:[2017-10-05 TO *]')
+    query = ('kcal:[100 TO 300] time:[TODAY TO NOW]')
     tree = parser.parse(query)
     rtree = resolver(tree)
     print("REPR:", repr(rtree))
