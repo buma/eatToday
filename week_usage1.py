@@ -67,16 +67,31 @@ def get_tag():
         .order_by(sqlalchemy.desc("weight_sum"))
     return items_tag
 
+def get_tags():
+#Week usage on tags
+    items_tag = session.query(FoodNutritionTags.tags,
+            func.count(FoodNutritionTags.tags).label("weight_sum") 
+            ) \
+            .filter(Item.time.between( \
+                week_before.date(), now.date())) \
+        .filter(FoodNutritionTags.fn_id==Item.calc_nutrition) \
+        .group_by(FoodNutritionTags.tags) \
+        .order_by(sqlalchemy.desc("weight_sum"))
+    return items_tag
+
 dbs = {
         "ingkey": (["INGKEY", "weight", "packages"],
             get_ingkey()
             ),
         "tag": (["Tag", "weight"],
             get_tag()
+            ),
+        "tags": (["tags", "appearances"],
+            get_tags()
             )
         }
 
-DB = "tag"
+DB = "tags"
 
 
 
