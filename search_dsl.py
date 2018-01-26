@@ -1,4 +1,5 @@
 import itertools
+import datetime
 from collections import defaultdict, Counter
 
 from sqlalchemy import Integer
@@ -195,8 +196,7 @@ for n in self.simplify_if_same(node.children, node)]
             else:
                 return date_parse(val, yearfirst=True)
 
-        #FIXME: compare with types not strings
-        if str(context["column"].type) == "DATETIME":
+        if context["column"].type.python_type == datetime.datetime:
             low_t = get_dt_val(node.low.value)
             high_t = get_dt_val(node.high.value)
             if type(low_t) == int:
