@@ -29,45 +29,57 @@ LAST_MONDAY = dateutil.relativedelta.relativedelta(
 
 now = datetime.datetime.now()
 START_OF_MONTH=now.replace(day=1)
-week_before =  (now+LAST_MONDAY)
-#week_before = START_OF_MONTH
+#week_before =  (now+LAST_MONDAY)
+week_before = START_OF_MONTH
 now = (now+dateutil.relativedelta.relativedelta(days=1))
 
 print ("{} - {}".format(week_before, now))
-headers = ["INGKEY", "weight", "packages"]
-table = []
-
+def get_ingkey():
 #Week usage on ingkeys
-items = session.query(FoodNutritionDetailsTime.nutritionaliases_ingkey,
-        func.sum(FoodNutritionDetailsTime.foodnutrition_details_weight*100) \
-                .label("weight_sum"), LocalNutrition.package_weight) \
-                .filter(FoodNutritionDetailsTime.eat_time.between( \
-                    week_before.date(), now.date())) \
-                .filter(LocalNutrition.ndbno==
-			FoodNutritionDetailsTime.foodnutrition_details_ndbno) \
-                .group_by(FoodNutritionDetailsTime.foodnutrition_details_ndbno) \
-                .order_by(sqlalchemy.desc("weight_sum"))
+    items = session.query(FoodNutritionDetailsTime.nutritionaliases_ingkey,
+            func.sum(FoodNutritionDetailsTime.foodnutrition_details_weight*100) \
+                    .label("weight_sum"), LocalNutrition.package_weight) \
+                    .filter(FoodNutritionDetailsTime.eat_time.between( \
+                        week_before.date(), now.date())) \
+                    .filter(LocalNutrition.ndbno==
+                            FoodNutritionDetailsTime.foodnutrition_details_ndbno) \
+                    .group_by(FoodNutritionDetailsTime.foodnutrition_details_ndbno) \
+                    .order_by(sqlalchemy.desc("weight_sum"))
+    for amount, value, package_weight in items:
+        packages = 0
+        if package_weight is not None:
+            packages=value/package_weight
+            print (amount, package_weight)
+        yield (amount, value, packages)
 
+def get_tag():
 #Week usage on tags
-items_wt = session.query(Tag.name,
-        func.sum(FoodNutritionDetails.weight*100).label("weight_sum") 
-        ) \
-        .filter(Item.time.between( \
-            week_before.date(), now.date())) \
-       .filter(FoodNutritionDetails.ndbno==LocalNutritionaliase.ndbno) \
-       .filter(FoodNutritionDetails.fn_id==Item.calc_nutrition) \
-       .filter(FoodNutritionDetails.ndbno==TagItem.ndbno) \
-       .filter(Tag.id==TagItem.tag_id) \
-       .group_by(Tag.id) \
-       .order_by(sqlalchemy.desc("weight_sum"))
+    items_tag = session.query(Tag.name,
+            func.sum(FoodNutritionDetails.weight*100).label("weight_sum") 
+            ) \
+            .filter(Item.time.between( \
+                week_before.date(), now.date())) \
+        .filter(FoodNutritionDetails.ndbno==LocalNutritionaliase.ndbno) \
+        .filter(FoodNutritionDetails.fn_id==Item.calc_nutrition) \
+        .filter(FoodNutritionDetails.ndbno==TagItem.ndbno) \
+        .filter(Tag.id==TagItem.tag_id) \
+        .group_by(Tag.id) \
+        .order_by(sqlalchemy.desc("weight_sum"))
+    return items_tag
+
+dbs = {
+        "ingkey": (["INGKEY", "weight", "packages"],
+            get_ingkey()
+            ),
+        "tag": (["Tag", "weight"],
+            get_tag()
+            )
+        }
+
+DB = "tag"
 
 
 
 
-for amount, value, package_weight in items:
-    packages = 0
-    if package_weight is not None:
-        packages=value/package_weight
-        print (amount, package_weight)
-    table.append([amount, value, packages])
-print (tabulate(table, headers=headers))
+headers, table = dbs[DB]
+print(tabulate(table, headers=headers))
