@@ -127,6 +127,9 @@ def validate_field(name):
 class SQLTransformer(LuceneTreeVisitorV2):
 
     def __init__(self):
+        self._set_fields()
+
+    def _set_fields(self):
         self.fields = {}
         self.tables = set()
         self.joins = []
@@ -335,8 +338,7 @@ for n in self.simplify_if_same(node.children, node)]
 
     def get_sql(self, query):
         print ("QUERY:", query)
-        self.fields = {}
-        self.tables = set()
+        self._set_fields()
         tree = parser.parse(query)
         rtree = resolver(tree)
         print("REPR:", repr(rtree))
