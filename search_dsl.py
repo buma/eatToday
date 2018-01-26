@@ -163,16 +163,19 @@ for n in self.simplify_if_same(node.children, node)]
         return not_(*items)
 
     def _binary_operation(self, op_type_name, node, parents, context):
+        child_context = dict(context) if context is not None else {}
         if op_type_name == "AND":
             op_type = and_
         else:
             op_type = or_
         children = self.simplify_if_same(node.children, node)
+        if context.get("need_in", False):
+            child_context["in"] = True
         #children = node.children
-        items = [self.visit(child, parents + [node], context) for child in
+        items = [self.visit(child, parents + [node], child_context) for child in
                  children]
-        if "column" in context:
-            if context.get("in", False):
+        if context is not None and "column" in context:
+            if context.get("need_in", False):
                 print ("ITEMS:", items)
                 if op_type_name == "AND":
                     self.having = func.count(FoodNutrition.id) == \
@@ -189,7 +192,7 @@ for n in self.simplify_if_same(node.children, node)]
             #self.joins.append(join(FoodNutritionDetails, FoodNutrition,
                 #FoodNutritionDetails.fn_id==FoodNutrition.id))
             self.where.append(FoodNutritionDetails.fn_id==FoodNutrition.id)
-            child_context["in"] = True
+            child_context["need_in"] = True
             if node.name == "has_ingkey":
                 self.has_ingkey_join = True
                 self.group_by = FoodNutrition.id
@@ -421,7 +424,9 @@ if __name__ == "__main__":
     query = ('type:HRANA time:[2017-10-05 TO 2017-12-06]')
     query = ('kcal:[* TO 300] time:[18 TO *] time:[2017-10-05 TO *]')
     query = ('kcal:[100 TO 300] time:[TODAY TO NOW]')
-    query = ('has_ingkey:(TAHINI MILLET_COOKED)')
+    query = ('time:[2018-01-01 TO TODAY] has_ingkey:RJAVI_FIZOL_KUHAN_CESNJEVEC')
+    query = ('has_ingkey:(MILLET_COOKED)')
+    #query = ('has_ingkey:(TAHINI MILLET_COOKED)')
     #query = ('ingkey:TAHINI')
     #query = ('type:HRAN?')
     #query = ('kcal:[100 TO 300] time:[18 TO 21]')
