@@ -48,15 +48,15 @@ items = session.query(FoodNutritionDetailsTime.nutritionaliases_ingkey,
                 .group_by(FoodNutritionDetailsTime.foodnutrition_details_ndbno) \
                 .order_by(sqlalchemy.desc("weight_sum"))
 
-#items1 = session.query(LocalNutritionaliase.ingkey,
-        #FoodNutritionDetails.weight*100, 
-        #Item.time) \
-       #.filter(FoodNutritionDetails.ndbno==LocalNutritionaliase.ndbno) \
-       #.filter(FoodNutritionDetails.fn_id==Item.calc_nutrition) \
-       #.filter(FoodNutritionDetails.ndbno==TagItem.ndbno) \
-       #.filter(Tag.id==TagItem.tag_id)
+items1 = session.query(LocalNutritionaliase.ingkey,
+        FoodNutritionDetails.weight*100, 
+        Item.time) \
+       .filter(FoodNutritionDetails.ndbno==LocalNutritionaliase.ndbno) \
+       .filter(FoodNutritionDetails.fn_id==Item.calc_nutrition) \
+       .filter(FoodNutritionDetails.ndbno==TagItem.ndbno) \
+       .filter(Tag.id==TagItem.tag_id)
 #Week usage on tags
-items = session.query(Tag.name,
+items_wt = session.query(Tag.name,
         func.sum(FoodNutritionDetails.weight*100).label("weight_sum") 
         ) \
         .filter(Item.time.between( \
@@ -70,7 +70,7 @@ items = session.query(Tag.name,
 
 #List of nutrition, tags for each nutrition part and weight for each nutrition
 #with eaten time and ingkey
-items = session.query(Item.time, FoodNutrition.nutrition,
+items_1 = session.query(Item.time, FoodNutrition.nutrition,
         LocalNutritionaliase.ingkey, Tag.name,(FoodNutritionDetails.weight*100).label("weight_sum")) \
         .filter(Item.time.between(
              week_before.date(), now.date())) \
@@ -94,6 +94,7 @@ def fillFoodnutritionTags(session):
             .filter(Tag.id==TagItem.tag_id) \
             .filter(~Tag.name.startswith("Brez")) \
             .filter(~Tag.name.startswith("Za v")) \
+            .filter(~Tag.name.startswith("Vsebuje ")) \
             .group_by(FoodNutritionDetails.fn_id, Tag.id) \
             .order_by(sqlalchemy.desc(FoodNutritionDetails.fn_id)) \
             #.limit(15)
@@ -128,36 +129,35 @@ def fillFoodnutritionTags(session):
         session.add(food_tags)
     session.commit()
 
-#items = session.query(Tag.name, Tag.id) \
-        #.filter(FoodNutritionDetails.ndbno==TagItem.ndbno) \
-        #.filter(Tag.id==TagItem.tag_id) \
+items_s = session.query(Tag.name, Tag.id) \
+        .filter(FoodNutritionDetails.ndbno==TagItem.ndbno) \
+        .filter(Tag.id==TagItem.tag_id) \
 
 #Prints list of all used ingkeys and its counts
-items = session.query(LocalNutritionaliase.ndbno, LocalNutritionaliase.ingkey,
+items_i = session.query(LocalNutritionaliase.ndbno, LocalNutritionaliase.ingkey,
         func.count(LocalNutritionaliase.ingkey).label("count_ingkey")) \
         .filter(FoodNutritionDetails.ndbno==LocalNutritionaliase.ndbno) \
         .group_by(FoodNutritionDetails.ndbno) \
         .order_by("count_ingkey")
-print (tabulate(items))
+#print (tabulate(items_i))
 
 #Prints all ingkeys with usages which doesn't have tags
-#tag_items = session.query(TagItem.ndbno.distinct())
-#items = session.query(LocalNutritionaliase.ingkey,
-        #func.count(LocalNutritionaliase.ingkey).label("count_ingkey")) \
-        #.filter(FoodNutritionDetails.ndbno==LocalNutritionaliase.ndbno) \
-        #.filter(~FoodNutritionDetails.ndbno.in_(tag_items)) \
-        #.group_by(FoodNutritionDetails.ndbno) \
-        #.order_by("count_ingkey")
-#print (tabulate(items))
+tag_items = session.query(TagItem.ndbno.distinct())
+items_t = session.query(LocalNutritionaliase.ingkey,
+        func.count(LocalNutritionaliase.ingkey).label("count_ingkey")) \
+        .filter(FoodNutritionDetails.ndbno==LocalNutritionaliase.ndbno) \
+        .filter(~FoodNutritionDetails.ndbno.in_(tag_items)) \
+        .group_by(FoodNutritionDetails.ndbno) \
+        .order_by("count_ingkey")
+#print (tabulate(items_t))
 
 #fillFoodnutritionTags(session)
 
 
 
-a=5/0
+#a=5/0
 
-for amount, value in items:
-    package_weight = None
+for amount, value, package_weight in items:
     packages = 0
     if package_weight is not None:
         packages=value/package_weight
