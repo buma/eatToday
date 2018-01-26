@@ -186,8 +186,14 @@ for n in self.simplify_if_same(node.children, node)]
         return context["column"] == node.value 
 
     def visit_range(self, node, parents, context):
-        #TODO: add NOW/TODAY and * for unlimited from/to part of range
+        #TODO: add NOW/TODAY 
+        def get_val(val):
+            if val == "*":
+                return None
+            return val
         def get_dt_val(val):
+            if val is None:
+                return None
             if len(val) <= 3:
                 if val[0] == "T":
                     return int(val[1:])
@@ -196,17 +202,39 @@ for n in self.simplify_if_same(node.children, node)]
             else:
                 return date_parse(val, yearfirst=True)
 
-        if context["column"].type.python_type == datetime.datetime:
-            low_t = get_dt_val(node.low.value)
-            high_t = get_dt_val(node.high.value)
-            if type(low_t) == int:
-                return cast(func.strftime("%H", context["column"]),
-                        Integer).between(low_t, high_t)
+        column = context["column"]
+        column_type = context["column"].type.python_type
+        low_t = None
+        high_t = None
+        if  column_type == datetime.datetime:
+            low_t = get_dt_val(get_val(node.low.value))
+            high_t = get_dt_val(get_val(node.high.value))
+            #Hour only part
+            if type(low_t) is int or type(high_t) is int:
+                column = cast(func.strftime("%H", context["column"]),
+                            Integer)
+            #print ("COLUMN: DATETIME", node)
+        elif column_type == int or column_type == float:
+            low_t = get_val(node.low.value)
+            high_t = get_val(node.high.value)
+            #print ("COLUMN: INT", node)
         else:
-            low_t = node.low.value
-            high_t = node.high.value
+            raise Exception("Range can only be used with Dates/integer/float "+
+                    "columns not {}".format(column_type))
+        if low_t is None and high_t is None:
+            raise Exception("Low and High can't be both Wildcards (*)!")
+        elif low_t is None:
+            if node.include_high:
+                return column <= high_t
+            else:
+                return column < high_t
+        elif high_t is None:
+            if node.include_low:
+                return column >= low_t
+            else:
+                return column > low_t
 
-        return context["column"].between(low_t, high_t)
+        return column.between(low_t, high_t)
 
     def visit_phrase(self, node, parents, context):
         print ("P", node.value)
@@ -310,6 +338,7 @@ if __name__ == "__main__":
     query = ('type:HRANA time:[T10 TO T12]')
     query = ('type:HRANA time:[2017-10-05 TO 2017-12-06]')
     query = ('kcal:[100 TO 300] time:[18 TO 21]')
+    query = ('kcal:[* TO 300] time:[18 TO *] time:[2017-10-05 TO *]')
     tree = parser.parse(query)
     rtree = resolver(tree)
     print("REPR:", repr(rtree))
