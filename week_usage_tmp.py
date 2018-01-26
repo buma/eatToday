@@ -19,7 +19,9 @@ from database import (
         t_foodnutrition_details_alias_time,
         Tag,
         TagItem,
-        FoodNutritionTags
+        FoodNutritionTags,
+        FoodTag,
+        FoodTagItem,
         )
 engine = sqlalchemy.create_engine(connectString, echo=True)
 Session = sessionmaker(bind=engine)
@@ -127,5 +129,12 @@ def fillFoodnutritionTags(session):
     session.commit()
 
 
+items_fd = session.query(func.group_concat(FoodTag.name) 
+        .label("food_tag_names"), FoodNutritionTags.tags) \
+    .join(FoodTagItem) \
+    .filter(FoodTagItem.fn_id==FoodNutritionTags.fn_id) \
+    .group_by(FoodTagItem.fn_id) \
+    .order_by("food_tag_names", FoodNutritionTags.tags)
+print (tabulate(items_fd, headers=["Food tags", "tags"]))
 
 #a=5/0
