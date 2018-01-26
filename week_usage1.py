@@ -55,7 +55,8 @@ def get_ingkey():
 def get_tag():
 #Week usage on tags
     items_tag = session.query(Tag.name,
-            func.sum(FoodNutritionDetails.weight*100).label("weight_sum") 
+            func.sum(FoodNutritionDetails.weight*100).label("weight_sum"),
+            func.count(Tag.id).label("tag_app")
             ) \
             .filter(Item.time.between( \
                 week_before.date(), now.date())) \
@@ -83,7 +84,7 @@ dbs = {
         "ingkey": (["INGKEY", "weight", "packages"],
             get_ingkey()
             ),
-        "tag": (["Tag", "weight"],
+        "tag": (["Tag", "weight", "appearances"],
             get_tag()
             ),
         "tags": (["tags", "appearances"],
