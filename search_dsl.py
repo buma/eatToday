@@ -172,18 +172,18 @@ for n in self.simplify_if_same(node.children, node)]
         else:
             op_type = or_
         children = self.simplify_if_same(node.children, node)
-        if context.get("need_in", False):
+        if child_context.get("need_in", False):
             child_context["in"] = True
         #children = node.children
         items = [self.visit(child, parents + [node], child_context) for child in
                  children]
-        if context is not None and "column" in context:
-            if context.get("need_in", False):
+        if "column" in child_context:
+            if child_context.get("need_in", False):
                 print ("ITEMS:", items)
                 if op_type_name == "AND":
                     self.having = func.count(FoodNutrition.id) == \
                         len(items)
-                return op_type(context["column"].in_(items))
+                return op_type(child_context["column"].in_(items))
         return op_type(*items)
 
     def visit_search_field(self, node, parents, context):
@@ -421,13 +421,13 @@ if __name__ == "__main__":
     gv = GraphVizitor()
 #tree = parser.parse('nutrition:(TAHINI MILLET) NOT tag:"PALACINKE" OR nutrition:red')
     #query = 'nutrition:(TAHINI~ MILLET) NOT description:"PALACINKE" OR nutrition:red'
-    #query = ('description:palačinke~ type:HRANA')
     query = ('type:HRANA time:[T10 TO T12]')
     query = ('type:HRANA time:[2017-10-05 TO 2017-12-06]')
     query = ('kcal:[* TO 300] time:[18 TO *] time:[2017-10-05 TO *]')
     query = ('kcal:[100 TO 300] time:[TODAY TO NOW]')
-    query = ('time:[2018-01-01 TO TODAY] has_ingkey:RJAVI_FIZOL_KUHAN_CESNJEVEC')
-    query = ('has_ingkey:(MILLET_COOKED)')
+    query = ('description:palačinke~ type:HRANA')
+    #query = ('time:[2018-01-01 TO TODAY] has_ingkey:RJAVI_FIZOL_KUHAN_CESNJEVEC')
+    #query = ('has_ingkey:(MILLET_COOKED)')
     #query = ('has_ingkey:(TAHINI MILLET_COOKED)')
     #query = ('ingkey:TAHINI')
     #query = ('type:HRAN?')
