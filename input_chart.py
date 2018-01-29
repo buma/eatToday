@@ -233,6 +233,12 @@ def init_chart(self):
             protein_series.append((item.time.timestamp()*1000), sum_protein)
             water_series.append((item.time.timestamp()*1000), sum_water)
 
+        #Adds current date time as last item in series to see on graph where we
+        #are now
+        kcal_series.append(QDateTime.currentDateTime().toMSecsSinceEpoch(), sum_kcal)
+        protein_series.append(QDateTime.currentDateTime().toMSecsSinceEpoch(), sum_protein)
+        water_series.append(QDateTime.currentDateTime().toMSecsSinceEpoch(), sum_water)
+
             #print (sum_kcal, sum_protein)
         kcal_y.setMax(max(2200, sum_kcal))
         protein_y.setMax(max(99, sum_protein))
