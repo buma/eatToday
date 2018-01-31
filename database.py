@@ -68,6 +68,7 @@ class Item(Base):
     prep_supervision = Column(Boolean, server_default="1")
     recipe_in_gourmet = Column(Boolean, nullable=False, server_default=text("0"))
     buku_recipe_id = Column(Integer)
+    food_tags = relationship("FoodTagItem", back_populates="item")
 
 
     def __init__(self, type, description, nutrition, time=None,
@@ -151,6 +152,7 @@ class FoodNutrition(Base, CalorieCalc):
     cholestrl = Column(Float)
     weight = Column(Float)
     items = relationship("Item", backref="nutri_info")
+    food_tags = relationship("FoodTagItem", back_populates="foodnutrition")
 
 
     def __repr__(self):
@@ -223,6 +225,12 @@ class FoodNutritionTags(Base):
     tags = Column(Text(200))
 
 
+t_tag_item = Table(
+    'tag_item', metadata,
+    Column('ndbno', ForeignKey('nutrition.ndbno'), primary_key=True, nullable=False),
+    Column('tag_id', ForeignKey('tag.id'), primary_key=True, nullable=False),
+    Index('Unique ndbno tag', 'ndbno', 'tag_id', unique=True)
+)
 
 
 class LocalNutrition(Base, CalorieCalc):
@@ -288,6 +296,12 @@ class LocalNutrition(Base, CalorieCalc):
     num_of_slices = Column(Integer)
     made_from = Column(ForeignKey('foodnutrition.id'))
     foodnutrition = relationship("FoodNutrition")
+    tags = relationship("Tag",
+            secondary=t_tag_item,
+            back_populates="nutritions")
+    alias = relationship("LocalNutritionaliase",
+            back_populates="nutrition",
+            uselist=False)
 
 
     def __add__(self, other):
@@ -349,7 +363,8 @@ class LocalNutritionaliase(Base):
     ndbno = Column(ForeignKey('nutrition.ndbno'))
     density_equivalent = Column(Text(20))
 
-    nutrition = relationship('LocalNutrition')
+    nutrition = relationship('LocalNutrition', back_populates="alias",
+            uselist=False)
 
     def __repr__(self):
         return "<{} -> {} ({})>".format(self.ingkey, self.ndbno,
@@ -411,19 +426,24 @@ class Tag(Base):
     id = Column(Integer, primary_key=True)
     name = Column(Text(100))
     main = Column(Boolean, server_default=text("0"))
+    nutritions = relationship("LocalNutrition",
+            secondary=t_tag_item,
+            back_populates="tags")
 
     def __repr__(self):
         return "<Tag {} {} {}>".format(self.id, self.name, self.main)
 
-class TagItem(Base):
-    __tablename__ = 'tag_item'
 
-    id = Column(Integer, primary_key=True)
-    ndbno = Column(ForeignKey('nutrition.ndbno'))
-    tag_id = Column(ForeignKey('tag.id'))
+class TagItem(Base):
+    __table__ = t_tag_item
+    #__tablename__ = 'tag_item'
+
+    #id = Column(Integer, primary_key=True)
+    #ndbno = Column(ForeignKey('nutrition.ndbno'))
+    #tag_id = Column(ForeignKey('tag.id'))
     
-    nutrition = relationship('LocalNutrition')
-    tag = relationship('Tag')
+    #nutrition = relationship('LocalNutrition')
+    #tag = relationship('Tag')
 
 class TagHierarchy(Base):
     __tablename__ = 'tag_hierarchy'
@@ -437,6 +457,7 @@ class FoodTag(Base):
     id = Column(Integer, primary_key=True)
     name = Column(Text(100))
     #main = Column(Boolean, server_default=text("0"))
+    foodnutritions = relationship("FoodTagItem", back_populates="tag")
 
     def __repr__(self):
         return "<FoodTag {} {}>".format(self.id, self.name)
@@ -453,9 +474,9 @@ class FoodTagItem(Base):
     tag_id = Column(ForeignKey('food_tag.id'))
     item_id = Column(ForeignKey('eat.id'))
     
-    foodnutrition = relationship('FoodNutrition')
-    tag = relationship('FoodTag')
-    item = relationship('Item')
+    foodnutrition = relationship('FoodNutrition', back_populates="food_tags")
+    tag = relationship('FoodTag', back_populates="foodnutritions")
+    item = relationship('Item', back_populates="food_tags")
 
 class UsdaWeight(Base):
     __tablename__ = 'usda_weights'
