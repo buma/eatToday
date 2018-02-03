@@ -91,7 +91,7 @@ def init_tag(self):
             self.lv_tag.selectionModel().clearSelection()
         self.selected_tags.clear()
         for tag in tags:
-            print (tag.tag.name, tag.tag_id)
+            #print (tag.tag.name, tag.tag_id)
             orig_index = tag_model.createIndex(tag.tag_id, 1)
             index = tag_proxy_model.mapFromSource(orig_index)
             if index.isValid():
@@ -131,9 +131,9 @@ def init_tag(self):
             row = self.tag_item_model.rowCount()
             self.tag_item_model.insertRow(row)
             self.tag_item_model.setData(self.tag_item_model.createIndex(row,
-                1), ndbno, Qt.EditRole)
+                0), ndbno, Qt.EditRole)
             self.tag_item_model.setData(self.tag_item_model.createIndex(row,
-                2), tag_id, Qt.EditRole)
+                1), tag_id, Qt.EditRole)
             print ("Adding tag id:", tag_id)
             #print (record.field("name").value(), record.field("id").value())
         #self.tv_tag_item.model().submitAll()
