@@ -36,6 +36,7 @@ class TimeSpan(Enum):
 class StatType(Enum):
     INGKEY = 0
     TAGS = 1
+    FOOD_TAGS = 2
 LAST_MONDAY = dateutil.relativedelta.relativedelta(
         weekday=dateutil.relativedelta.MO(-1))
 
@@ -71,13 +72,31 @@ foodnutrition_details.ndbno = tag_item.ndbno AND tag.id = tag_item.tag_id GROUP
 BY tag.id ORDER BY weight_sum DESC
     """
 
+
     tags_query = QSqlQuery()
     tags_query.prepare(tags_sql)
     tags_query1 = QSqlQuery()
     tags_query1.prepare(tags_sql)
 
+    food_tags_sql = """
+    SELECT food_tag.name AS tag_name, sum(foodnutrition_details.weight * 100)
+    AS weight_sum, count(DISTINCT eat.id) AS tag_app
+FROM food_tag, foodnutrition_details, eat, food_tag_item
+WHERE eat.time BETWEEN :start AND :end AND  foodnutrition_details.fn_id = eat.calc_nutrition AND
+foodnutrition_details.fn_id = food_tag_item.fn_id
+AND food_tag_item.tag_id = food_tag.id
+AND food_tag_item.checked = 1
+ GROUP BY food_tag.id ORDER BY weight_sum DESC
+ """
+
+    food_tags_query = QSqlQuery()
+    food_tags_query.prepare(food_tags_sql)
+    food_tags_query1 = QSqlQuery()
+    food_tags_query1.prepare(food_tags_sql)
+
     queries[StatType.INGKEY]=(GET_INGKEY_QUERY, GET_INGKEY_QUERY1)
     queries[StatType.TAGS] = (tags_query, tags_query1)
+    queries[StatType.FOOD_TAGS] = (food_tags_query, food_tags_query1)
     left_model = QSqlQueryModel()
     right_model = QSqlQueryModel()
     self.tv_stats.setModel(left_model)
