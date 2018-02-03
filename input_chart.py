@@ -39,7 +39,16 @@ def init_chart(self):
             "iron":8,
             "magnesium":400,
             "potassium": 4700,
-            "sodium": 1500
+            "sodium": 1500,
+            "phosphorus": 700,
+            "zinc":11,
+
+            "vitaminc":90,
+            "vitk":120,
+            "vite":15,
+            "vitaminb6":1,
+            "vitb12":2,
+            "thiamin":1
             }
     self.idx_kcal = [
             ("Macronutrients", "Macronutrients from {} to {}",
@@ -63,7 +72,9 @@ def init_chart(self):
                     "iron": "Železo",
                     "magnesium": "Magnezij",
                     "potassium": "Kalij",
-                    "sodium": "Natrij"
+                    "sodium": "Natrij",
+                    "phosphorus": "Fosfor",
+                    "zinc": "Zinc"
                     },
                 lambda nutrient, x: x,
                 QBarSeries,
@@ -75,11 +86,39 @@ def init_chart(self):
                     "iron": "Železo",
                     "magnesium": "Magnezij",
                     "potassium": "Kalij",
-                    "sodium": "Natrij"
+                    "sodium": "Natrij",
+                    "phosphorus": "Fosfor",
+                    "zinc": "Zinc"
                     },
                 lambda nutrient, x: x/limits[nutrient]*100,
                 QBarSeries,
                 "%d %%"
+                ),
+            ("Vitamins", "Vitamins from {} to {}",
+                {
+                    "vitaminc": "Vitamin C",
+                    "vitaminb6": "Vitamin B6",
+                    "vitb12": "Vitamin B12",
+                    "thiamin": "Thiamin",
+                    "vite": "Vitamin E",
+                    "vitk": "Vitamin K"
+                    },
+                lambda nutrient, x: x,
+                QBarSeries,
+                "%.2f mg"
+                ),
+            ("Vitamins in % RDA", "Vitamins in % from RDA from {} to {}",
+                {
+                    "vitaminc": "Vitamin C",
+                    "vitaminb6": "Vitamin B6",
+                    "vitb12": "Vitamin B12",
+                    "thiamin": "Thiamin",
+                    "vite": "Vitamin E",
+                    "vitk": "Vitamin K"
+                    },
+                lambda nutrient, x: x/limits[nutrient]*100,
+                QBarSeries,
+                "%.2f %%"
                 ),
             ("Macronutrients kcal", "Macronutrients in kcal from {} to {}",
                 {
