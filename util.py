@@ -230,6 +230,7 @@ def add_baked(food_id, ingkey, desc, session):
     if food_n.weight is None or food_n.weight == 0:
         print ("Error weight isn't set for:", food_n.desc, food_n.nutrition)
         return
+    food_weight = food_n.weight
     ratio = 100/food_n.weight
     food_n_dict = food_n.__dict__
     for key in diff:
@@ -240,6 +241,9 @@ def add_baked(food_id, ingkey, desc, session):
     ln_100=ratio*ln
     ln_100.made_from=food_id
     ln_100.desc=desc
+    ln_100.package_weight=food_weight
+    ln_100.gramwt1=food_weight
+    ln_100.gramdsc1="package"
     session.add(ln_100)
     session.flush()
     alias = LocalNutritionaliase(ingkey=ingkey, ndbno=ln_100.ndbno)
