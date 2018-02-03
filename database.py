@@ -213,8 +213,8 @@ class FoodNutritionDetails(Base):
     ndbno = Column(ForeignKey('nutrition.ndbno'), primary_key=True,
             nullable=False)
     weight = Column(Float, nullable=False)
-    foodnutrition = relationship("FoodNutrition")
-    nutrition = relationship("LocalNutrition")
+    foodnutrition = relationship("FoodNutrition", innerjoin=True)
+    nutrition = relationship("LocalNutrition", innerjoin=True)
     #items = relationship("Item", backref="nutri_info")
 
 class FoodNutritionTags(Base):
@@ -426,6 +426,7 @@ class Tag(Base):
     id = Column(Integer, primary_key=True)
     name = Column(Text(100))
     main = Column(Boolean, server_default=text("0"))
+    cosmetic = Column(Boolean, nullable=False, server_default=text("0"))
     nutritions = relationship("LocalNutrition",
             secondary=t_tag_item,
             back_populates="tags")
@@ -450,6 +451,8 @@ class TagHierarchy(Base):
 
     tag_id = Column(ForeignKey('tag.id'), primary_key=True)
     child_tag_id = Column(ForeignKey('tag.id'), primary_key=True)
+    parent_tag = relationship("Tag",foreign_keys=[tag_id])
+    tag = relationship("Tag",foreign_keys=[child_tag_id])
 
 class FoodTag(Base):
     __tablename__ = 'food_tag'
