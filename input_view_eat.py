@@ -20,8 +20,11 @@ from search_dsl import SQLTransformer, InvalidField
 def init_view_eat(self):
     print ("Init view eat")
     search_model = QSqlQueryModel()
+    proxy_model = QSortFilterProxyModel(self)
+    proxy_model.setSourceModel(search_model)
     transformer = SQLTransformer()
-    self.tv_search_eat.setModel(search_model)
+    self.tv_search_eat.setModel(proxy_model)
+    self.tv_search_eat.setSortingEnabled(True)
 
     def search():
         query = self.le_search.text()
