@@ -1,4 +1,5 @@
 import itertools
+from functools import partial
 import datetime
 from collections import defaultdict, Counter
 
@@ -148,6 +149,27 @@ class SQLTransformer(LuceneTreeVisitorV2):
         #Column can also be ADD this means that selected columns will be added
         #to existing ones 
         self.add_to_columns = False
+
+
+    @staticmethod
+    def get_column_names():
+        str = ""
+
+        tag_f = lambda x, tag_name: "<{0}>{1}</{0}>".format(tag_name, x)
+
+        bold = partial(tag_f, tag_name="b") # lambda x: tag_f(x, "b") 
+
+        #TODO: filter columns 
+        for table_name, table in table_name_sql.items():
+            str+=bold(table_name)+"<br />"
+            str+="Columns:<br />"
+            str+=", ".join(get_columns(table))
+            str+="<br /><br />"
+        #TODO: add table names to unique columns
+        str+=bold("Unique columns:< br />")
+        str+=", ".join(columns_table.keys())
+
+        return str
 
 
     def simplify_if_same(self, children, current_node):

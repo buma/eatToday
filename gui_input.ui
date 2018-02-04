@@ -6,7 +6,7 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>622</width>
+    <width>577</width>
     <height>614</height>
    </rect>
   </property>
@@ -18,7 +18,7 @@
     <item>
      <widget class="QTabWidget" name="tabWidget">
       <property name="currentIndex">
-       <number>1</number>
+       <number>0</number>
       </property>
       <widget class="QWidget" name="tab_add">
        <attribute name="title">
@@ -428,6 +428,13 @@
             </property>
            </widget>
           </item>
+          <item row="3" column="0">
+           <widget class="QPushButton" name="pb_search_help">
+            <property name="text">
+             <string>Help</string>
+            </property>
+           </widget>
+          </item>
          </layout>
         </item>
         <item>
@@ -768,7 +775,7 @@
             <rect>
              <x>0</x>
              <y>0</y>
-             <width>582</width>
+             <width>537</width>
              <height>420</height>
             </rect>
            </property>
@@ -937,7 +944,7 @@
             <rect>
              <x>0</x>
              <y>0</y>
-             <width>582</width>
+             <width>537</width>
              <height>369</height>
             </rect>
            </property>
@@ -1133,7 +1140,7 @@
     <rect>
      <x>0</x>
      <y>0</y>
-     <width>622</width>
+     <width>577</width>
      <height>20</height>
     </rect>
    </property>

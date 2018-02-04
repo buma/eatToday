@@ -16,6 +16,7 @@ from PyQt5.QtSql import (
         )
 
 from search_dsl import SQLTransformer, InvalidField
+from help_dialog import HelpDialog
 
 def init_view_eat(self):
     print ("Init view eat")
@@ -47,6 +48,12 @@ def init_view_eat(self):
             msg.setDetailedText(iostream.getvalue())
             msg.exec_()
 
-        
+    def show_help():
+        msg = HelpDialog(self)
+        msg.setText("Column help")
+        msg.setInformativeText(SQLTransformer.get_column_names())
+        #TODO: add serch query help
+        msg.show()
 
     self.pb_search.clicked.connect(search)
+    self.pb_search_help.clicked.connect(show_help)
