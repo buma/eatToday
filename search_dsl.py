@@ -4,7 +4,7 @@ from collections import defaultdict, Counter
 
 from sqlalchemy import Integer
 from sqlalchemy.sql import (
-        select, and_, or_, not_, cast, func, join
+        select, and_, or_, not_, cast, func, join, text
         )
 from sqlalchemy.dialects import sqlite
 
@@ -142,6 +142,12 @@ class SQLTransformer(LuceneTreeVisitorV2):
         self.having = None
         self.group_by = None
         self.where = []
+        #We can select columns now with select:(nutrition.kcal time)
+        #Column is validated and needs to be unique
+        self.chosen_columns = []
+        #Column can also be ADD this means that selected columns will be added
+        #to existing ones 
+        self.add_to_columns = False
 
 
     def simplify_if_same(self, children, current_node):
@@ -182,6 +188,9 @@ for n in self.simplify_if_same(node.children, node)]
         #children = node.children
         items = [self.visit(child, parents + [node], child_context) for child in
                  children]
+        #We are selecting columns
+        if "is_column" in child_context:
+            return items
         if "column" in child_context:
             if child_context.get("need_in", False):
                 print ("ITEMS:", items)
@@ -207,20 +216,27 @@ for n in self.simplify_if_same(node.children, node)]
             #self.tables.add(FoodNutrition)
         else:
             p_name = node.name
-        name, table, column = validate_field(p_name)
-        self.tables.add(table)
-        print ("NAME:", name, table)
-        #print ("PARENTS:", type(parents[-1]))
-        cur_field = self.fields.get(name, [])
-        child_context["column"] = column
+        if p_name != "select":
+            name, table, column = validate_field(p_name)
+            self.tables.add(table)
+            print ("NAME:", name, table)
+            #print ("PARENTS:", type(parents[-1]))
+            cur_field = self.fields.get(name, [])
+            child_context["column"] = column
+        else:
+            child_context["is_column"] = True
         enode = self.visit(node.children[0], parents + [node], child_context)
-        cur_field.append(enode)
-        self.fields[name] = cur_field
+        if p_name != "select":
+            cur_field.append(enode)
+            self.fields[name] = cur_field
+        else:
+            self.chosen_columns += filter(lambda x: x is not None, enode)
+            return text("1 == 1")
         return enode 
 
     def visit_field_group(self, node, parents, context):
         fields = self.visit(node.expr, parents + [node], context)
-        print ("FIELDS:", fields)
+        #print ("FIELDS:", fields)
         return fields
 
     def visit_word(self, node, parents, context):
@@ -234,6 +250,15 @@ for n in self.simplify_if_same(node.children, node)]
         #print ("CONTEXT:", context)
         if context.get("in", False):
             return node.value
+        #We are selecting column names
+        if context.get("is_column", False):
+            if node.value == "ADD":
+                self.add_to_columns = True
+                return None
+            name, table, column = validate_field(node.value)
+            self.tables.add(table)
+            return column
+
         return context["column"] == node.value 
 
     def visit_range(self, node, parents, context):
@@ -304,6 +329,9 @@ for n in self.simplify_if_same(node.children, node)]
 
     def get_columns(self):
 
+        if self.chosen_columns and not self.add_to_columns:
+            return self.chosen_columns
+
         def column_filter(column):
             ignored_columns = set([
                 "ash",
@@ -328,12 +356,13 @@ for n in self.simplify_if_same(node.children, node)]
         print ("TABLES:", self.tables)
         print ("JOINS:", [str(x) for x in self.joins])
         if len(self.tables) == 1 and len(self.joins) == 0:
-            return list(self.tables)
+            return list(self.tables) + self.chosen_columns
         if len(self.tables) > 1:
             return list(filter(column_filter, itertools.chain(*(x.__table__.columns for x in
-                self.tables))))
+                self.tables)))) + self.chosen_columns
         if self.has_ingkey_join:
-            return list(filter(column_filter, FoodNutrition.__table__.columns))
+            return list(filter(column_filter,
+                FoodNutrition.__table__.columns)) + self.chosen_columns
 
     def make_joins(self):
         if Item in self.tables and FoodNutrition in self.tables:
@@ -343,6 +372,9 @@ for n in self.simplify_if_same(node.children, node)]
             self.joins.append(join(Tag, TagItem,
                     TagItem.tag_id==Tag.id))
             self.where.append(TagItem.ndbno==LocalNutrition.ndbno)
+        if LocalNutrition in self.tables and \
+                LocalNutritionaliase in self.tables:
+                self.joins.append(join(LocalNutrition, LocalNutritionaliase))
 
 
     def get_sql(self, query):
@@ -441,7 +473,7 @@ if __name__ == "__main__":
     #query = ('ingkey:TAHINI')
     #query = ('type:HRAN?')
     #query = ('kcal:[100 TO 300] time:[18 TO 21]')
-    query = ('tag.name:Pecivo nutrition.kcal:[10 TO *]')
+    query = ('tag.name:Pecivo select:(tag.name  nutrition.sugar  nutritionaliases.ingkey)')
     tree = parser.parse(query)
     rtree = resolver(tree)
     print("REPR:", repr(rtree))
