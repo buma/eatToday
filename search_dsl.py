@@ -21,7 +21,10 @@ from database import (
         Item,
         FoodNutrition,
         LocalNutritionaliase,
-        FoodNutritionDetails
+        FoodNutritionDetails,
+        Tag,
+        TagItem,
+        LocalNutrition
         )
 """
 
@@ -62,6 +65,8 @@ table_name_sql["eat"] = Item
 table_name_sql["foodnutrition"] = FoodNutrition
 table_name_sql["nutritionaliases"] = LocalNutritionaliase
 table_name_sql["foodnutrition_details"] = FoodNutritionDetails
+table_name_sql["tag"] = Tag
+table_name_sql["nutrition"] = LocalNutrition
 
 
 table_columns = {}
@@ -334,6 +339,10 @@ for n in self.simplify_if_same(node.children, node)]
         if Item in self.tables and FoodNutrition in self.tables:
             self.joins.append(join(FoodNutrition, Item,
                     Item.calc_nutrition==FoodNutrition.id))
+        if Tag in self.tables and LocalNutrition in self.tables:
+            self.joins.append(join(Tag, TagItem,
+                    TagItem.tag_id==Tag.id))
+            self.where.append(TagItem.ndbno==LocalNutrition.ndbno)
 
 
     def get_sql(self, query):
@@ -432,6 +441,7 @@ if __name__ == "__main__":
     #query = ('ingkey:TAHINI')
     #query = ('type:HRAN?')
     #query = ('kcal:[100 TO 300] time:[18 TO 21]')
+    query = ('tag.name:Pecivo nutrition.kcal:[10 TO *]')
     tree = parser.parse(query)
     rtree = resolver(tree)
     print("REPR:", repr(rtree))
