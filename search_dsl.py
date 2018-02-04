@@ -365,6 +365,8 @@ for n in self.simplify_if_same(node.children, node)]
                 FoodNutrition.__table__.columns)) + self.chosen_columns
 
     def make_joins(self):
+        if Tag in self.tables and FoodNutrition in self.tables:
+            self.tables.add(LocalNutrition)
         if Item in self.tables and FoodNutrition in self.tables:
             self.joins.append(join(FoodNutrition, Item,
                     Item.calc_nutrition==FoodNutrition.id))
@@ -375,6 +377,19 @@ for n in self.simplify_if_same(node.children, node)]
         if LocalNutrition in self.tables and \
                 LocalNutritionaliase in self.tables:
                 self.joins.append(join(LocalNutrition, LocalNutritionaliase))
+        if not self.has_ingkey_join:
+            if LocalNutrition in self.tables \
+                    and FoodNutrition in self.tables:
+                    self.joins.append(join(FoodNutritionDetails,
+                        LocalNutrition,
+                        FoodNutritionDetails.ndbno==LocalNutrition.ndbno))
+                    self.where.append(FoodNutrition.id==FoodNutritionDetails.fn_id)
+            elif LocalNutritionaliase in self.tables \
+                    and FoodNutrition in self.tables:
+                    self.joins.append(join(FoodNutritionDetails,
+                        LocalNutritionaliase,
+                        FoodNutritionDetails.ndbno==LocalNutritionaliase.ndbno))
+                    self.where.append(FoodNutrition.id==FoodNutritionDetails.fn_id)
 
 
     def get_sql(self, query):
@@ -392,7 +407,9 @@ for n in self.simplify_if_same(node.children, node)]
         for join in self.joins:
             s = s.select_from(join)
         if self.where:
-            s = s.where(*self.where)
+            print ("WHERE:", self.where)
+            for where in self.where:
+                s = s.where(where)
         s = s.where(visited)
         if self.having is not None:
             s = s.having(self.having)
@@ -474,6 +491,8 @@ if __name__ == "__main__":
     #query = ('type:HRAN?')
     #query = ('kcal:[100 TO 300] time:[18 TO 21]')
     query = ('tag.name:Pecivo select:(tag.name  nutrition.sugar  nutritionaliases.ingkey)')
+    query = ('ingkey:COOKED_NOSKIN_POTATO time:[17 TO 20] select:(eat.time eat.description eat.nutrition foodnutrition.kcal)')
+    query = 'tag.name:Krompir time:[17 TO 20] select:(eat.time eat.description eat.nutrition foodnutrition.kcal)'
     tree = parser.parse(query)
     rtree = resolver(tree)
     print("REPR:", repr(rtree))
