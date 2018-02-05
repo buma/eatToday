@@ -11,10 +11,11 @@ from database import (
         LocalNutrition,
         LocalNutritionaliase,
         FoodNutrition,
+        FoodNutritionDetails,
         UsdaWeight
         )
 from gourmet_db import Nutrition
-from util import get_amounts, get_nutrition, calculate_nutrition
+from util import get_amounts, get_nutrition, calculate_nutrition, add_nutrition_details
 
 engine = sqlalchemy.create_engine(connectString)
 gourmet_engine = \
@@ -27,6 +28,7 @@ Session.configure(binds={Item: engine,
     LocalNutrition: engine,
     LocalNutritionaliase: engine,
     FoodNutrition: engine,
+    FoodNutritionDetails: engine,
     UsdaWeight: engine
     })
 
@@ -45,6 +47,8 @@ for item in items:
     print (get_nutrition(item, session))
     session.commit()
     print ()
+
+add_nutrition_details(session)
 
 #fns = session.query(FoodNutrition) \
         #.filter(FoodNutrition.nutrition.contains("SWEET_COCOA"))
