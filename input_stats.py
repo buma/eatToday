@@ -32,6 +32,9 @@ def to_qdate(date, add=0):
 class TimeSpan(Enum):
     WEEKLY = 0
     MONTHLY = 1
+    DAYS7 = 2
+    DAYS14 = 3
+    DAYS30 = 4
 
 class StatType(Enum):
     INGKEY = 0
@@ -117,6 +120,15 @@ AND food_tag_item.checked = 1
         print ("UPDATING VIEW:", today, time_span, stat_type)
         if time_span == TimeSpan.WEEKLY:
             start = (today+LAST_MONDAY)
+            end = today
+        elif time_span == TimeSpan.DAYS7:
+            start = today-dateutil.relativedelta.relativedelta(days=7)
+            end = today
+        elif time_span == TimeSpan.DAYS14:
+            start = today-dateutil.relativedelta.relativedelta(days=14)
+            end = today
+        elif time_span == TimeSpan.DAYS30:
+            start = today-dateutil.relativedelta.relativedelta(days=30)
             end = today
         else:
             start = today.replace(day=1)
