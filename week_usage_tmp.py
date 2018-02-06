@@ -159,6 +159,7 @@ def make_food_tags(ingkeys, tag_names, descs):
             ("ričet", "ričet"),
             ("polpeti", "polpeti"),
             ("quesadillas", ["quesadillas", "tortilla_stuff"]),
+            ("tortilje", "tortilla_stuff"),
             ("juha", "juha"),
             ("golaž", "golaž")
             ]
@@ -176,6 +177,8 @@ def make_food_tags(ingkeys, tag_names, descs):
             elif "Namaz" in tag_names:
                 food_tags.add("slan namaz")
             #tahini, klobase, sir, slani namaz
+    if in_desc("palačink") and "Krompir" in tag_names:
+        return set(["palačinke", "krompir", "slane_palačinke"])
     for search, tag in desc_search:
         if in_desc(search):
             if search == "šmorn" and in_desc("palačink"):
@@ -191,7 +194,7 @@ def make_food_tags(ingkeys, tag_names, descs):
             return set([tag_name.lower()])
     if "Testenine" in tag_names:
         #Izlocit treba jusne testenine pa tiste v fizolovih stvareh
-        if not (in_desc("juha") or in_desc("enolončnica")):
+        if not (in_desc("juha") or in_desc("enolončnica") or in_desc("pašta")):
             return set(["testenine"])
     elif "Mleko" in tag_names and "Keksi" in tag_names:
         return set(["mleko z keksi"])
@@ -200,8 +203,6 @@ def make_food_tags(ingkeys, tag_names, descs):
             return set(["meso z zelenjavo"])
     elif "Zelenjava" in tag_names and "Ribe" in tag_names:
         return set(["ribe z zelenjavo"])
-    elif in_desc("palačink") and "Krompir" in tag_names:
-        return set(["palačinke", "krompir", "slane_palačinke"])
     return food_tags
 
 def add_food_tags(session, items=None):
@@ -275,6 +276,7 @@ def add_food_tags(session, items=None):
                 tag = FoodTag(name=to_add_tag)
                 food_tags[to_add_tag] = tag
             food_tag_item = FoodTagItem(item_id=eat_id)
+            #food_tag_item.checked = True
             food_tag_item.tag = tag
             foodnutrition.food_tags.append(food_tag_item)
         #session.flush()
