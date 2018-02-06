@@ -159,7 +159,8 @@ def make_food_tags(ingkeys, tag_names, descs):
             ("ričet", "ričet"),
             ("polpeti", "polpeti"),
             ("quesadillas", ["quesadillas", "tortilla_stuff"]),
-            ("juha", "juha")
+            ("juha", "juha"),
+            ("golaž", "golaž")
             ]
 
     in_desc= lambda q: all([q in x.lower() for x in descs])
@@ -175,7 +176,20 @@ def make_food_tags(ingkeys, tag_names, descs):
             elif "Namaz" in tag_names:
                 food_tags.add("slan namaz")
             #tahini, klobase, sir, slani namaz
-    elif "Testenine" in tag_names:
+    for search, tag in desc_search:
+        if in_desc(search):
+            if search == "šmorn" and in_desc("palačink"):
+                return set()
+            elif search == "palačink" and in_desc("šmorn"):
+                return set()
+            if isinstance(tag, list):
+                return set(tag)
+            else:
+                return set([tag])
+    for tag_name in one_tag:
+        if tag_name in tag_names and len(tag_names) == 1:
+            return set([tag_name.lower()])
+    if "Testenine" in tag_names:
         #Izlocit treba jusne testenine pa tiste v fizolovih stvareh
         if not (in_desc("juha") or in_desc("enolončnica")):
             return set(["testenine"])
@@ -188,24 +202,15 @@ def make_food_tags(ingkeys, tag_names, descs):
         return set(["ribe z zelenjavo"])
     elif in_desc("palačink") and "Krompir" in tag_names:
         return set(["palačinke", "krompir", "slane_palačinke"])
-    else:
-        for search, tag in desc_search:
-            if in_desc(search):
-                if isinstance(tag, list):
-                    return set(tag)
-                else:
-                    return set([tag])
-        for tag_name in one_tag:
-            if tag_name in tag_names and len(tag_names) == 1:
-                return set([tag_name.lower()])
     return food_tags
 
-def add_food_tags(session):
-    items = session.query(FoodNutritionDetails) \
-            .options(joinedload(FoodNutritionDetails.nutrition)) \
-            .options(joinedload(FoodNutritionDetails.foodnutrition)) \
-            .order_by(FoodNutritionDetails.fn_id.desc()) 
-            #.limit(32)
+def add_food_tags(session, items=None):
+    if items is None:
+        items = session.query(FoodNutritionDetails) \
+                .options(joinedload(FoodNutritionDetails.nutrition)) \
+                .options(joinedload(FoodNutritionDetails.foodnutrition)) \
+                .order_by(FoodNutritionDetails.fn_id.desc()) 
+                #.limit(32)
     tag_hier = add_food_hier(session)
 
     def hierahize_tags(tags):
@@ -223,6 +228,7 @@ def add_food_tags(session):
         return name_tag
     food_tags = get_food_tags(session)
     to_add = set()
+    rets = []
     for fn_id, nutris in itertools.groupby(items, key=lambda x:x.fn_id):
         foodnutrition = None
         current_food_tags = []
@@ -250,7 +256,7 @@ def add_food_tags(session):
         print ("NUTRITION:", foodnutrition.nutrition)
         print ("  DESC:", eat_items)
         print ("  ID:", eat_id)
-        print ("  FOOD_TAGS:", current_food_tags, food_tags_set)
+        print ("  FOOD_TAGS:", food_tags_set)
         print ("  INGKEY:", ingkeys)
         print ("  TAGS:", tags)
         new_food_tags = make_food_tags(ingkeys, tags, eat_items)
@@ -259,6 +265,9 @@ def add_food_tags(session):
         to_add.update(to_add_tags)
         print ("  NFOOD_TAG:", new_food_tags)
         print ("  NEW TAGS:", to_add_tags)
+        if to_add_tags:
+            rets.append((foodnutrition.id, foodnutrition.nutrition, tags, ingkeys,
+                    eat_items, food_tags_set, new_food_tags))
         for to_add_tag in to_add_tags:
             if to_add_tag in food_tags:
                 tag = food_tags[to_add_tag]
@@ -273,6 +282,7 @@ def add_food_tags(session):
 
     #session.commit()
     print ("TO ADD TAGS", to_add)
+    return rets
 
 
 def add_food_hier(session):
