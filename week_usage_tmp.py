@@ -318,6 +318,34 @@ def add_food_hier(session):
     #print (clean_parents)
     return clean_parents
 
+def get_ingkeys_without_foodtags(session):
+    existing_food_tags = session.query(FoodTagItem.fn_id.distinct())
+    items = session.query(func.count(FoodNutritionDetails.ndbno).label("app"),
+            FoodNutritionDetails.ndbno, LocalNutritionaliase.ingkey) \
+            .join(LocalNutritionaliase,
+                    LocalNutritionaliase.ndbno==FoodNutritionDetails.ndbno) \
+            .filter(~FoodNutritionDetails.fn_id.in_(existing_food_tags)) \
+            .group_by(FoodNutritionDetails.ndbno) \
+            .order_by(sqlalchemy.desc("app"))
+    print (items)
+
+    print (tabulate(items))
+
+get_ingkeys_without_foodtags(session)
+
+def get_ingkey_without_foodtags(session, ndbno):
+    existing_food_tags = session.query(FoodTagItem.fn_id.distinct())
+    items = session.query(FoodNutrition.id, FoodNutrition.nutrition) \
+            .join(FoodNutritionDetails) \
+            .filter(~FoodNutritionDetails.fn_id.in_(existing_food_tags)) \
+            .filter(FoodNutritionDetails.ndbno==ndbno) \
+            .order_by(FoodNutrition.id)
+    print (items)
+
+    print (tabulate(items))
+
+#get_ingkey_without_foodtags(session, 100042) #EGG
+
 
 #kasa=session.query(Tag).filter(Tag.name=="Kaša").one()
 #kasa_ndbno=[x.ndbno for x in kasa.nutritions]
