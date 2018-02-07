@@ -342,18 +342,25 @@ def get_ingkeys_without_foodtags(session):
 
 get_ingkeys_without_foodtags(session)
 
-def get_ingkey_without_foodtags(session, ndbno):
+def get_ingkey_without_foodtags(session, ndbno, show_desc=False):
     existing_food_tags = session.query(FoodTagItem.fn_id.distinct())
-    items = session.query(FoodNutrition.id, FoodNutrition.nutrition) \
+    columns = [FoodNutrition.id, FoodNutrition.nutrition]
+    if show_desc:
+        columns.append(Item.description)
+
+    items = session.query(*columns) \
             .join(FoodNutritionDetails) \
             .filter(~FoodNutritionDetails.fn_id.in_(existing_food_tags)) \
             .filter(FoodNutritionDetails.ndbno==ndbno) \
             .order_by(FoodNutrition.id)
+    if show_desc:
+        items = items \
+            .join(FoodNutrition.items) 
     print (items)
 
     print (tabulate(items))
 
-#get_ingkey_without_foodtags(session, 100042) #EGG
+get_ingkey_without_foodtags(session, 100011, True) #EGG
 
 
 #kasa=session.query(Tag).filter(Tag.name=="Kaša").one()
