@@ -165,6 +165,7 @@ def make_food_tags(ingkeys, tag_names, descs):
             ]
 
     in_desc= lambda q: all([q in x.lower() for x in descs])
+    descs_starts= lambda q: all([x.lower().startswith(q) for x in descs])
 
     if "Kruh" in tag_names:
         if "HRENOVKA" in ingkeys or "TEL_HRENOVKA" in ingkeys \
@@ -179,6 +180,14 @@ def make_food_tags(ingkeys, tag_names, descs):
             #tahini, klobase, sir, slani namaz
     if in_desc("palačink") and "Krompir" in tag_names:
         return set(["palačinke", "krompir", "slane_palačinke"])
+    if "RED_LENTIL" in ingkeys:
+        if in_desc("juha"):
+            return set(["juha"])
+        elif descs_starts("čili"):
+            return set(["čili"])
+        elif not any(True for key, _ in desc_search if in_desc(key)):
+            return set(["rdeča_leča"])
+
     for search, tag in desc_search:
         if in_desc(search):
             if search == "šmorn" and in_desc("palačink"):
