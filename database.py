@@ -317,7 +317,8 @@ class LocalNutrition(Base, CalorieCalc):
                 self_value = 0 if self_vars[key] is None else self_vars[key]
                 other_value = 0 if key not in other_vars or other_vars[key] is None else other_vars[key]
                 together[key]=self_value+other_value
-        together["desc"] = self.desc + " | " + other.desc
+        if self.desc and other.desc:
+            together["desc"] = self.desc + " | " + other.desc
 #if we are adding LocalNutrition+Nutrition this adds Nutrition data which would
         #otherwise be forgotten
         for key, value in other_vars.items():
