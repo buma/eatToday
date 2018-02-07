@@ -212,7 +212,7 @@ def make_food_tags(ingkeys, tag_names, descs):
         if not (in_desc("juha") or in_desc("enolončnica") or in_desc("pašta")):
             return set(["testenine"])
     elif "Mleko" in tag_names and "Keksi" in tag_names:
-        return set(["mleko z keksi"])
+        return set(["mleko s keksi"])
     elif set(["Mleko", "Kosmiči"]) == tag_names:
         return set(["mleko s kosmiči"])
     elif "Zelenjava" in tag_names and "Meso" in tag_names:
