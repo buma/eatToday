@@ -201,6 +201,12 @@ def make_food_tags(ingkeys, tag_names, descs):
     for tag_name in one_tag:
         if tag_name in tag_names and len(tag_names) == 1:
             return set([tag_name.lower()])
+    if "MILLET" in ingkeys or "MILLET_COOKED" in ingkeys:
+        #Doesn't set prosena_kaša when it is used as side dish
+        if len(set(["Meso", "Stročnice"]) & tag_names) == 0 and \
+            "OATMEAL" not in ingkeys:
+                #TODO: add support for oatmeal
+                return set(["prosena_kaša"])
     if "Testenine" in tag_names:
         #Izlocit treba jusne testenine pa tiste v fizolovih stvareh
         if not (in_desc("juha") or in_desc("enolončnica") or in_desc("pašta")):
