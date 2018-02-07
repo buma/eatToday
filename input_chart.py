@@ -13,6 +13,7 @@ QPercentBarSeries)
 from database import (
         Item, LocalNutrition, LocalNutritionaliase, FoodNutrition,
         Tag, TagItem, UsdaWeight)
+from config import (needed_kcal, needed_protein)
 
 def to_qdate(date, add=0):
     """Creates QDateTime from pytho date
@@ -164,17 +165,11 @@ def init_chart(self):
 
         Protein is similar
         """
-        #TODO: join this values calculation with display
-        needed_kcal = 2200
-        needed_kcal_lunch = 1300
-        lunch_kcal=500
-        diff = 0
-        needed_kcal_2_hours_till_lunch=(needed_kcal_lunch)/(8/2) 
-        needed_kcal_2_hours_after_lunch=(needed_kcal-4*needed_kcal_2_hours_till_lunch-lunch_kcal)/2
-        needed_protein = 99
-        lunch_protein = 23
-        needed_protein_2_hours_till_lunch = 14.625
-        needed_protein_2_hours_after_lunch = 8.75
+        from config import (
+                needed_protein_2_hours_till_lunch,
+                needed_kcal_2_hours_till_lunch,
+                lunch_kcal, lunch_protein, needed_kcal_2_hours_after_lunch,
+                needed_protein_2_hours_after_lunch)
         ds = datetime(today.year,today.month,today.day,7)
         now = datetime.today()
         print (now)
@@ -279,8 +274,8 @@ def init_chart(self):
         water_series.append(QDateTime.currentDateTime().toMSecsSinceEpoch(), sum_water)
 
             #print (sum_kcal, sum_protein)
-        kcal_y.setMax(max(2200, sum_kcal))
-        protein_y.setMax(max(99, sum_protein))
+        kcal_y.setMax(max(needed_kcal, sum_kcal))
+        protein_y.setMax(max(needed_protein, sum_protein))
         water_y.setMax(max(2100, sum_water))
         #print ("BEFORE CHANGE:")
         #print (axisX.min(), axisX.max())
