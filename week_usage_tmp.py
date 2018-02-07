@@ -208,6 +208,8 @@ def make_food_tags(ingkeys, tag_names, descs):
             "OATMEAL" not in ingkeys:
                 #TODO: add support for oatmeal
                 return set(["prosena_kaša"])
+    if "SPINACH" in ingkeys:
+        return set(["špinača"])
     if "Testenine" in tag_names:
         #Izlocit treba jusne testenine pa tiste v fizolovih stvareh
         if not (in_desc("juha") or in_desc("enolončnica") or in_desc("pašta")):
