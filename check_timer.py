@@ -13,9 +13,9 @@ import dateutil.rrule
 import dateutil.relativedelta
 
 from database import Item, FoodNutrition, LocalNutrition
-from connectSettings import connectString
+from connectSettings import creator
 
-engine = sqlalchemy.create_engine(connectString)
+engine = sqlalchemy.create_engine('sqlite://', creator=creator)
 
 Session = scoped_session(sessionmaker(bind=engine))
 
