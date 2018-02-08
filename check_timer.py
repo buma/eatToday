@@ -89,31 +89,36 @@ class SessionThread(Thread):
         self.diff = diff
         self.test = False
 
+    def call_func(self):
+        if self.test:
+            end = nt+dateutil.relativedelta.relativedelta(
+                    minutes=5*self.cnts)
+        else:
+            end = datetime.datetime.now()
+        print ("NOW:", end)
+        end1 = end + dateutil.relativedelta.relativedelta(
+                minutes=7)
+        rets = get_sum(self.session, today, end1)
+        end1 = end + dateutil.relativedelta.relativedelta(
+                minutes=35)
+        rets += get_sum(self.session, today, end1)
+        rets = sorted(rets, key=lambda x: (x[1], x[3]))
+        ln = None
+        txt = []
+        print ("RETS:", rets)
+        for type, items in itertools.groupby(rets, key=lambda x: x[1]):
+            l = list(items)
+            if ln is not None:
+                ln = l[0][0]
+            txt.append(l[0][2])
+        if txt:
+            notify(ln, " IN ".join(txt))
+
     def run(self):
+        self.call_func()
         while not self.stopped.wait(0.5 if self.test else self.diff*60):
         #while not self.stopped.wait(5):
-            if self.test:
-                end = nt+dateutil.relativedelta.relativedelta(
-                        minutes=5*self.cnts)
-            else:
-                end = datetime.datetime.now()
-            print ("NOW:", end)
-            end1 = end + dateutil.relativedelta.relativedelta(
-                    minutes=7)
-            rets = get_sum(self.session, today, end1)
-            end1 = end + dateutil.relativedelta.relativedelta(
-                    minutes=35)
-            rets += get_sum(self.session, today, end1)
-            rets = sorted(rets, key=lambda x: (x[1], x[3]))
-            ln = None
-            txt = []
-            print ("RETS:", rets)
-            for type, items in itertools.groupby(rets, key=lambda x: x[1]):
-                l = list(items)
-                if ln is not None:
-                    ln = l[0][0]
-                txt.append(l[0][2])
-            notify(ln, " IN ".join(txt))
+            self.call_func()
 
             if self.test:
                 self.cnts+=1
