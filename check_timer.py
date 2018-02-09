@@ -70,7 +70,7 @@ def get_sum(session, start, end=None):
 
     if diff.kcal <= -300:
         txt = "JEJ V NASLEDNJE POL URE"
-        if diff.kcal <= 5:
+        if diff.protein <= -5:
             txt = "JEJ BELJAKOVINE V NASLEDNJE POL URE"
         rets.append((diff, 1, txt, end))
     return rets
