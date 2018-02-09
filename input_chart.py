@@ -9,7 +9,7 @@ from PyQt5.QtGui import QPainter
 from PyQt5.QtChart import (
         QChart, QChartView, QDateTimeAxis, QLineSeries,
 QValueAxis, QBarSet, QBarSeries, QBarCategoryAxis, QStackedBarSeries,
-QPercentBarSeries)
+QPercentBarSeries, QSplineSeries)
 from database import (
         Item, LocalNutrition, LocalNutritionaliase, FoodNutrition,
         Tag, TagItem, UsdaWeight)
@@ -142,7 +142,22 @@ def init_chart(self):
                 nutrient=="protein" else value*9,
                 QPercentBarSeries,
                 "%d %"
-                )
+                ),
+            ("Macronutrients line", "Macronutrients from {} to {}",
+        #Dictionary where key is what we want to chart from foodnutrition and
+        #value is description to show in legend
+                {
+                "carb": "Oglj. hidrati",
+                "lipid": "Maščobe",
+                "protein": "Beljakovine",
+                "sugar": "Sladkor",
+                "fiber": "Vlaknine",
+                "fasat": "Nasičene maščobe",
+                },
+                lambda nutrient, x: x,
+                QLineSeries,
+                "%.2f g"
+                ),
             ]
     self.cb_kcal_chart_type.addItems([
         x[0] for x in self.idx_kcal
@@ -380,12 +395,22 @@ def init_chart(self):
         sets = {}
         entities = [sa.func.strftime("%Y-%m-%d",Item.time).label("day")]
 
+        is_barchart = True
+        if isinstance(chart_data[4](), QLineSeries):
+            is_barchart = False
+
+        #print ("BARCHART:", is_barchart, chart_data[4], QLineSeries)
+
 #Creates barsets where each barset is one value in foodnutrition
 #Each value in barset is different day
 #Also creates sqlalchemy sum select
         func_multiplay = chart_data[3]
         for nutrition, nutrition_name in keys.items():
-            sets[nutrition] = QBarSet(nutrition_name)
+            if is_barchart:
+                sets[nutrition] = QBarSet(nutrition_name)
+            else:
+                sets[nutrition] = chart_data[4]()
+                sets[nutrition].setName(nutrition_name)
             entities.append(
                     sa.func.sum(func_multiplay(nutrition,getattr(FoodNutrition,
                         nutrition))) \
@@ -401,35 +426,74 @@ def init_chart(self):
                 .filter(Item.time.between(last_week, today)) \
                 .group_by("day") \
                 .order_by(Item.time)
+        #print (items)
         #print (items.column_descriptions)
         #items.column_descriptions
 #je list z dictinariy kjer je key name pove imena columnov
         for item in items:
+            #print ("ITEM:", item)
+            if not is_barchart:
+                tm = item.day
+                dt = dateutil.parser.parse(tm)
+                en = int(dt.timestamp()*1000)
             for key, bar_set in sets.items():
                 if key in item.keys():
-                    bar_set.append(getattr(item, key))
+                    if is_barchart:
+                        bar_set.append(getattr(item, key))
+                    else:
+                        #print (bar_set.name(), en, getattr(item, key))
+                        bar_set.append(en, getattr(item,key))
                 else:
-                    bar_set.append(0)
+                    if is_barchart:
+                        bar_set.append(0)
+                    else:
+                        bar_set.append(en, 0)
 
-        bar_series = chart_data[4]()
-        for value in sets.values():
-            bar_series.append(value)
-        #Creates x axis with dates
-        string_dates = []
-        for date in rrule(DAILY, last_week, count=7):
-            string_dates.append(date.strftime("%a %d. %b"))
-        axis = QBarCategoryAxis()
-        axis.append(string_dates)
+        #print ("SETS:", sets)
+        if is_barchart:
+            bar_series = chart_data[4]()
+            for value in sets.values():
+                bar_series.append(value)
+            #Creates x axis with dates
+            string_dates = []
+            for date in rrule(DAILY, last_week, count=7):
+                string_dates.append(date.strftime("%a %d. %b"))
+            axis = QBarCategoryAxis()
+            axis.append(string_dates)
+        else:
+            axis = QDateTimeAxis()
+            axis.setFormat("d. M. yyyy")
+            #Sets date ticks as many as we want to show dates
+            axis.setTickCount(list(sets.values())[0].count())
+            axis_y = QValueAxis()
+            axis_y.setLabelFormat(chart_data[5])
+            axis_y.setTickCount(10)
 
         chart = self.chartView_kcal.chart()
-        chart.removeAllSeries()
-        chart.addSeries(bar_series)
         chart.setAnimationOptions(QChart.SeriesAnimations)
+        chart.removeAllSeries()
+        for cur_axis in chart.axes():
+            chart.removeAxis(cur_axis)
+        if is_barchart:
+            chart.addSeries(bar_series)
+        else:
+            self.chartView_kcal.setRenderHint(QPainter.Antialiasing)
+            chart.addAxis(axis, Qt.AlignBottom)
+            chart.addAxis(axis_y, Qt.AlignLeft)
+            for series in sets.values():
+                #print ("SERIES:", series.name())
+                chart.addSeries(series)
+                series.attachAxis(axis)
+                series.attachAxis(axis_y)
+            axis_y.setRange(0, 150)
+            #chart.setAxisX(axis, series)
+            #chart.setAxisY(axis_y, series)
 
-        chart.createDefaultAxes()
-        chart.setAxisX(axis, bar_series)
-        chart.axisY(bar_series).setLabelFormat(chart_data[5])
-        chart.axisY(bar_series).setTickCount(10)
+        if is_barchart:
+            chart.createDefaultAxes()
+            chart.setAxisX(axis, bar_series)
+            chart.axisY(bar_series).setLabelFormat(chart_data[5])
+            chart.axisY(bar_series).setTickCount(10)
         chart.legend().setVisible(True)
         chart.legend().setAlignment(Qt.AlignBottom)
 
