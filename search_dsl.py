@@ -23,6 +23,8 @@ from database import (
         FoodNutrition,
         LocalNutritionaliase,
         FoodNutritionDetails,
+        FoodTag,
+        FoodTagItem,
         Tag,
         TagItem,
         LocalNutrition
@@ -68,6 +70,7 @@ table_name_sql["nutritionaliases"] = LocalNutritionaliase
 table_name_sql["foodnutrition_details"] = FoodNutritionDetails
 table_name_sql["tag"] = Tag
 table_name_sql["nutrition"] = LocalNutrition
+table_name_sql[FoodTag.__tablename__] = FoodTag
 
 
 table_columns = {}
@@ -399,6 +402,9 @@ for n in self.simplify_if_same(node.children, node)]
         if LocalNutrition in self.tables and \
                 LocalNutritionaliase in self.tables:
                 self.joins.append(join(LocalNutrition, LocalNutritionaliase))
+        if FoodTag in self.tables and FoodNutrition in self.tables:
+                self.joins.append(join(FoodTag, FoodTagItem))
+                self.where.append(FoodTagItem.fn_id==FoodNutrition.id)
         if not self.has_ingkey_join:
             if LocalNutrition in self.tables \
                     and FoodNutrition in self.tables:
@@ -515,6 +521,7 @@ if __name__ == "__main__":
     query = ('tag.name:Pecivo select:(tag.name  nutrition.sugar  nutritionaliases.ingkey)')
     query = ('ingkey:COOKED_NOSKIN_POTATO time:[17 TO 20] select:(eat.time eat.description eat.nutrition foodnutrition.kcal)')
     query = 'tag.name:Krompir time:[17 TO 20] select:(eat.time eat.description eat.nutrition foodnutrition.kcal)'
+    query = 'food_tag.name:polpeti select:(foodnutrition.kcal eat.time eat.description)'
     tree = parser.parse(query)
     rtree = resolver(tree)
     print("REPR:", repr(rtree))
