@@ -85,6 +85,17 @@ def init_add_eat(self):
                 self.price_proxy.setFilterRegExp(qregexp)
             else:
                 self.price_proxy.setFilterRegExp("")
+        if "best_before_model" in vars(self):
+            best_before_m = self.best_before_model
+            if best_before_m is not None:
+                if self.filters:
+                    filter = " AND ".join(self.filters)
+                    filter = filter.replace("nutrition.ndbno",
+                            "best_before.ndbno")
+                    best_before_m.setFilter(filter)
+                    #print ("SEL", best_before_m.selectStatement())
+                else:
+                    best_before_m.setFilter(None)
         #print ("Filters:", model_keys.filter(), model_keys.selectStatement())
 
     def filter_add_nutrition(model_index_):

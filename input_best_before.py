@@ -34,6 +34,8 @@ def init_best_before(self):
     self.cb_bb_item.setModel(nutri_model)
     self.cb_bb_item.setModelColumn(0)
 
+    self.best_before_model = model
+
     self.tv_best_before.setModel(model)
     self.tv_best_before.setSortingEnabled(True)
     self.tv_best_before.sortByColumn(2, Qt.AscendingOrder)
