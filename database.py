@@ -477,6 +477,7 @@ class FoodTagItem(Base):
     fn_id = Column(ForeignKey('foodnutrition.id'))
     tag_id = Column(ForeignKey('food_tag.id'))
     item_id = Column(ForeignKey('eat.id'))
+    checked = Column(Boolean, nullable=False, server_default=text("0"))
     
     foodnutrition = relationship('FoodNutrition', back_populates="food_tags")
     tag = relationship('FoodTag', back_populates="foodnutritions")
