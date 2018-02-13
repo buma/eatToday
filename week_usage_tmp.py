@@ -162,7 +162,8 @@ def make_food_tags(ingkeys, tag_names, descs):
             ("quesadillas", ["quesadillas", "tortilla_stuff"]),
             ("tortilje", "tortilla_stuff"),
             ("juha", "juha"),
-            ("golaž", "golaž")
+            ("golaž", "golaž"),
+            ("obara", "obara")
             ]
 
     in_desc= lambda q: all([q in x.lower() for x in descs])
