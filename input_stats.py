@@ -120,19 +120,15 @@ AND food_tag_item.checked = 1
         print ("UPDATING VIEW:", today, time_span, stat_type)
         if time_span == TimeSpan.WEEKLY:
             start = (today+LAST_MONDAY)
-            end = today
         elif time_span == TimeSpan.DAYS7:
             start = today-dateutil.relativedelta.relativedelta(days=7)
-            end = today
         elif time_span == TimeSpan.DAYS14:
             start = today-dateutil.relativedelta.relativedelta(days=14)
-            end = today
         elif time_span == TimeSpan.DAYS30:
             start = today-dateutil.relativedelta.relativedelta(days=30)
-            end = today
         else:
             start = today.replace(day=1)
-            end = today
+        end = today+dateutil.relativedelta.relativedelta(hour=23,minute=59,second=0)
         print (start, "-", end)
         query_both = queries[stat_type]
         if self.rb_left.isChecked():
