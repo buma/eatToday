@@ -47,13 +47,17 @@ LAST_MONDAY = dateutil.relativedelta.relativedelta(
 def init_stats(self):
     print("init stats")
     queries = {}
+#Banana weight is from average weight of one banana
+#Egg also
     INGKEY_SQL = """
             SELECT foodnutrition_details_alias_time.nutritionaliases_ingkey AS
             ingkey,
             sum(foodnutrition_details_alias_time.foodnutrition_details_weight * 100) AS weight_sum,
---            CASE WHEN (nutrition.package_weight IS NOT NULL) THEN
---            CAST(weight_sum AS FLOAT) /
---            nutrition.package_weight END AS package_weight1,
+            sum(foodnutrition_details_alias_time.foodnutrition_details_weight * 100)/
+            CASE foodnutrition_details_alias_time.nutritionaliases_ingkey WHEN "EGG" THEN 62
+            WHEN "BANANA" THEN 173
+            ELSE nutrition.package_weight
+            END   AS num_items,
             nutrition.package_weight AS nutrition_package_weight
     FROM foodnutrition_details_alias_time, nutrition
     WHERE foodnutrition_details_alias_time.eat_time BETWEEN :start AND :end AND
