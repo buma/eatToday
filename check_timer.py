@@ -108,7 +108,7 @@ class SessionThread(Thread):
         print ("RETS:", rets)
         for type, items in itertools.groupby(rets, key=lambda x: x[1]):
             l = list(items)
-            if ln is not None:
+            if ln is None:
                 ln = l[0][0]
             txt.append(l[0][2])
         if txt:
