@@ -325,6 +325,35 @@ class LocalNutrition(Base, CalorieCalc):
             if key not in together and key not in skip:
                 together[key] = value
         return LocalNutrition(**together)
+
+    #FIXME: change this to instance method
+    @staticmethod
+    def add_salt(item, salt_grams, session):
+        salt=session.query(LocalNutrition) \
+                .join(LocalNutritionaliase) \
+                .filter(LocalNutritionaliase.ingkey=="SALT") \
+                .one()
+        print ("SALT:", salt)
+        skip = set(["ndbno", "desc", "foodgroup", "gramwt1",
+            "gramdsc1", "gramwt2", "gramdsc2", "refusepct",
+            "package_weight", "num_of_slices", "source",
+            "made_from"])
+        for s in skip:
+            print ("{}: {}".format(s, getattr(item, s)))
+        am_salt=salt_grams/100*salt
+        ret = item+am_salt
+        ret.desc = item.desc
+        print ("AFTER")
+        for s in skip:
+            setattr(ret, s, getattr(item, s))
+            print ("{}: {}".format(s, getattr(ret,s)))
+        #Reduce changes. Without it there are a lot None -> 0 changes
+        for key, value in vars(salt).items():
+            if key not in skip:
+                if value==0.0:
+                    setattr(ret, key, getattr(item, key))
+        return ret
+
     
     def __rmul__(self, other_value):
         together = {}
