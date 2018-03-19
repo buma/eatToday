@@ -180,6 +180,8 @@ def init_add_eat(self):
                 print ("Problem with units:", units)
                 self.statusbar.clearMessage()
 
+    def change_calc_nutrition(state):
+        self.calculate[0] = self.cb_calc_nutrition.isChecked()
 
     def add_new():
         model = self.le_description.completer().model()
@@ -234,6 +236,7 @@ def init_add_eat(self):
             self.preparingTimeSpinBox.setValue(0)
             self.eatingTimeSpinBox.setValue(0)
             self.cookingTimeSpinBox.setValue(0)
+            change_calc_nutrition(1)
         except Exception as e:
             iostream = io.StringIO();
             #Shows error dialog:
@@ -291,3 +294,4 @@ def init_add_eat(self):
     self.lv_keys.clicked.connect(show_usda)
     self.cb_tag_select.currentIndexChanged.connect(filter_add_nutrition)
     self.le_nutrition.textChanged.connect(validate_input_nutrition)
+    self.cb_calc_nutrition.stateChanged.connect(change_calc_nutrition)

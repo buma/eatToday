@@ -30,11 +30,12 @@ import input_stats as input_stats
 
 class MainWindow(QMainWindow, Ui_MainWindow):
 
-    def __init__(self, parent = None):
+    def __init__(self, parent = None, calculate=[False]):
         QMainWindow.__init__(self, parent)
         self.setupUi(self)
 
         self.initUI()
+        self.calculate=calculate
 
 
     def initUI(self):
