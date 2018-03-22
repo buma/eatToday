@@ -22,6 +22,7 @@ from database import (
         FoodNutritionTags,
         FoodTag,
         FoodTagItem,
+        Price
         )
 engine = sqlalchemy.create_engine(connectString, echo=True)
 Session = sessionmaker(bind=engine)
@@ -363,7 +364,59 @@ def get_ingkey_without_foodtags(session, ndbno, show_desc=False):
 
     print (tabulate(items))
 
-get_ingkey_without_foodtags(session, 100011, True) #EGG
+def get_price_for_food(session, fn_id, price_get="MIN"):
+    if price_get == "MIN":
+        sql_func = lambda x: func.min(x)
+    elif price_get == "MAX":
+        sql_func = lambda x: func.min(x)
+    elif price_get == "MEAN" or price_get == "AVG":
+        sql_func = lambda x: func.avg(x)
+    #Gets all nutritions with weight and min/max/avg price for each nutrition
+    #or None
+    #For this foodnutrition
+    fnds = session.query(FoodNutritionDetails.ndbno,
+	 FoodNutritionDetails.weight*100,sql_func(Price.price)) \
+	.outerjoin(Price, Price.ndbno==FoodNutritionDetails.ndbno) \
+        .filter(FoodNutritionDetails.fn_id==fn_id) \
+        .group_by(FoodNutritionDetails.ndbno)
+    missing_price = 0
+    missing_package_weight = 0
+    all = 0
+    all_price = 0
+    for ndbno, weight, price in fnds:
+        all+=1
+        price_ok = False
+        package_weight_ok = False
+        lnt = session.query(LocalNutrition.package_weight, LocalNutrition.desc) \
+                .filter(LocalNutrition.ndbno==ndbno) \
+                .one()
+        if price is None:
+            missing_price+=1
+            print ("MISSING PRICE:{}".format(lnt[1]))
+        else:
+            price_ok=True
+
+        if lnt[0] is None:
+            missing_package_weight+=1
+            print ("MISSING PACKAGE WEIGHT:{}".format(lnt[1]))
+        else:
+            package_weight_ok = True
+            package_weight = lnt[0]
+
+        if package_weight_ok and price_ok:
+            part_price = weight/package_weight*price
+            print ("{} {}g package:{}g price:{}€ PART PRICE:{}".format(
+                lnt[1],
+                weight,
+                package_weight, price, part_price))
+            all_price+=part_price
+    print ("Missing price:{} missing_p_weight:{}  price:{}".format(
+        missing_price, missing_package_weight, all_price))
+
+
+
+
+#get_ingkey_without_foodtags(session, 12155)
 
 
 #kasa=session.query(Tag).filter(Tag.name=="Kaša").one()
