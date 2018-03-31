@@ -26,6 +26,7 @@ class TimeSpan(Enum):
     DAYS7 = 2
     DAYS14 = 3
     DAYS30 = 4
+    YEARLY = 5
 
 class StatType(Enum):
     INGKEY = 0

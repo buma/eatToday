@@ -119,8 +119,10 @@ AND food_tag_item.checked = 1
             start = today-dateutil.relativedelta.relativedelta(days=14)
         elif time_span == TimeSpan.DAYS30:
             start = today-dateutil.relativedelta.relativedelta(days=30)
-        else:
+        elif time_span == TimeSpan.MONTHLY:
             start = today.replace(day=1)
+        elif time_span == TimeSpan.YEARLY:
+            start = today.replace(day=1, month=1)
         end = today+dateutil.relativedelta.relativedelta(hour=23,minute=59,second=0)
         print (start, "-", end)
         query_both = queries[stat_type]
