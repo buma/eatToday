@@ -1,8 +1,10 @@
 import dateutil.relativedelta
+from collections import defaultdict
 from tabulate import tabulate
 from util import TimeSpan, StatType
 from PyQt5.QtCore import *
 from PyQt5.QtWidgets import QDialogButtonBox
+from chart_dialog import ChartDialog
 
 from PyQt5.QtWidgets import (
         QCompleter,
@@ -31,6 +33,21 @@ def to_qdate(date, add=0):
 
 LAST_MONDAY = dateutil.relativedelta.relativedelta(
         weekday=dateutil.relativedelta.MO(-1))
+tags_specific_query = """
+SELECT tag.name AS tag_name, sum(foodnutrition_details.weight * 100) AS weight_sum,
+strftime('%Y-%m-%d', eat.time)
+FROM tag, foodnutrition_details, eat, nutritionaliases, tag_item
+WHERE eat.time BETWEEN :start AND :end AND foodnutrition_details.ndbno =
+nutritionaliases.ndbno AND foodnutrition_details.fn_id = eat.calc_nutrition AND
+foodnutrition_details.ndbno = tag_item.ndbno AND tag.id = tag_item.tag_id
+AND tag.name IN (:ITEMS:)
+GROUP BY strftime('%Y-%m-%d', eat.time), tag.id
+ORDER BY eat.time
+"""
+
+graph_queries = {
+        StatType.TAGS: tags_specific_query
+        }
 
 
 def init_stats(self):
@@ -106,6 +123,8 @@ AND food_tag_item.checked = 1
     self.cb_stats.addItems(list((x.name for x in TimeSpan)))
     self.cb_stats_type.addItems(list((x.name for x in StatType)))
 
+    #FIXME: this needs to be made somehow differently
+    dates_left, dates_right = [None], [None]
 
 
     def update_start_end():
@@ -137,11 +156,13 @@ AND food_tag_item.checked = 1
         if self.rb_left.isChecked():
             print ("LEFT")
             self.lbl_left.setText("{} - {}".format(start, end))
+            dates_left[0] = (start, end)
             model = left_model
             query = query_both[0]
         elif self.rb_right.isChecked():
             print ("RIGHT")
             self.lbl_right.setText("{} - {}".format(start, end))
+            dates_right[0] = (start, end)
             model = right_model
             query = query_both[1]
         else:
@@ -216,8 +237,76 @@ AND food_tag_item.checked = 1
         print ("Same then before:") 
         print (tabulate(table_eq, headers=["Item", "before", "after"]))
 
+    def show_stats_chart():
+        print ("Showing stats chart")
+        if self.rb_left.isChecked():
+            print ("LEFT")
+            current_tv = self.tv_stats
+            dates = dates_left[0]
+        else:
+            print ("RIGHT")
+            current_tv = self.tv_stats_right
+            dates = dates_right[0]
+
+        indexes = current_tv.selectedIndexes()
+        print ("DATES:", dates)
+        items = []
+        for index in indexes:
+            #print (index.row())
+            record = current_tv.model().record(index.row())
+            print (record.value(0))
+            items.append(record.value(0))
+
+        stat_type = StatType[self.cb_stats_type.currentText()]
+        show_graph(self, items, dates, stat_type)
+
+
     self.de_stats.dateChanged.connect(update_view)
     self.cb_stats.currentIndexChanged.connect(update_view)
     self.cb_stats_type.currentIndexChanged.connect(update_view)
     self.btn_compare.clicked.connect(compare)
+    self.pb_stats_chart.clicked.connect(show_stats_chart)
     update_view(self.de_stats.dateTime())
+
+def show_graph(self, items, dates, stat_type):
+    print ("ITEMS:", items)
+    start, end = dates
+    print ("{} - {} {}".format(start, end, stat_type))
+    query_sql = graph_queries[stat_type]
+    if query_sql is not None:
+        query_sql = query_sql.replace(":ITEMS:", ", ".join('"{}"'.format(x) for x in
+            items))
+        #print (query_sql)
+        query_ = QSqlQuery()
+        query_.prepare(query_sql)
+        query_.bindValue(":start", str(start))
+        query_.bindValue(":end", str(end))
+        min_max = {}
+        for item in items:
+            min_max[item]={"min": 99999, "max":0}
+        hash = defaultdict(dict)
+        if query_.exec_():
+            while query_.next():
+                item = query_.value(0)
+                weight = query_.value(1)
+                item_date = query_.value(2)
+                min_max[item]["min"]=min(min_max[item]["min"], weight)
+                min_max[item]["max"]=max(min_max[item]["max"], weight)
+                hash[item_date][item]=weight
+            hash.default_factory = None
+            print (min_max)
+            print (hash)
+            #Scales values from min to max to 0-1
+            for values in hash.values():
+                for item, weight in values.items():
+                    min_val = min_max[item]["min"]
+                    max_val = min_max[item]["max"]
+                    values[item]=(weight-min_val)/(max_val-min_val)
+            print (hash)
+            cd = ChartDialog(self)
+
+            cd.set_calendar_chart(items,hash)
+            cd.show()
+
+        else:
+            print(query_.lastError().text())

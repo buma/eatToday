@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>577</width>
-    <height>614</height>
+    <width>775</width>
+    <height>724</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -797,8 +797,8 @@
             <rect>
              <x>0</x>
              <y>0</y>
-             <width>537</width>
-             <height>420</height>
+             <width>735</width>
+             <height>530</height>
             </rect>
            </property>
            <attribute name="label">
@@ -966,8 +966,8 @@
             <rect>
              <x>0</x>
              <y>0</y>
-             <width>537</width>
-             <height>369</height>
+             <width>735</width>
+             <height>479</height>
             </rect>
            </property>
            <attribute name="label">
@@ -1088,6 +1088,13 @@
            </widget>
           </item>
           <item>
+           <widget class="QPushButton" name="pb_stats_chart">
+            <property name="text">
+             <string>Chart</string>
+            </property>
+           </widget>
+          </item>
+          <item>
            <spacer name="horizontalSpacer_4">
             <property name="orientation">
              <enum>Qt::Horizontal</enum>
@@ -1162,7 +1169,7 @@
     <rect>
      <x>0</x>
      <y>0</y>
-     <width>577</width>
+     <width>775</width>
      <height>20</height>
     </rect>
    </property>

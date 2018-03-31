@@ -136,7 +136,7 @@ class SceneCalendar(calendar.Calendar):
                 items.append(rect)
                 #Date:
                 text_item = QtWidgets.QGraphicsTextItem(str(d))
-                text_item.setFont(font)
+                text_item.setFont(self.font)
                 text_width = text_item.boundingRect().width()
                 text_item.setPos(rect_x+width/2-text_width/2,
                         rect_y+self.height/2-text_item.boundingRect().height()/2)
@@ -157,10 +157,15 @@ class SceneCalendar(calendar.Calendar):
                 False)
         if not has_data:
             return None
+        #FIXME: temporary hack so that only one hash is used
+        has_data = has_data.get(self.items[0], None) 
+        if not has_data:
+            return None
+
         #print ("{}-{}-{}".format(self.year, self.month, day), has_data)
         #print ("X: {} Y:{}".format(x, y))
         boundingRect = rect.boundingRect()
-        transformed = (has_data-self.min_num)/self.max_num
+        transformed = has_data
         allowed_max = min(boundingRect.width(), boundingRect.height())*0.9
         new_size = allowed_max*transformed
 
@@ -173,12 +178,10 @@ class SceneCalendar(calendar.Calendar):
         return item
 
 
-    def add_data(self, min_num, max_num, hash):
-        self.min_num = min_num
-        self.max_num = max_num
+    def add_data(self, items, hash):
+        self.items = items
         self.hash = hash
         self.data_added = True
-        print ("MIN:{} MAX:{}".format(min_num, max_num))
 
     def formatyear(self, theyear, w=2, l=1, c=6, m=3):
         """
@@ -256,10 +259,16 @@ if __name__ == "__main__":
         max_sum=0
         for line in data:
             ws = float(line["weight_sum"])
-            hash[line["date"]]=ws
+            hash[line["date"]]={"Sadje":ws}
             min_sum=min(min_sum, ws)
             max_sum=max(max_sum, ws)
-        mm.add_data(min_sum, max_sum, hash)
+        for values in hash.values():
+            for item, weight in values.items():
+                min_val = min_sum
+                max_val = max_sum
+                values[item]=(weight-min_val)/(max_val-min_val)
+
+        mm.add_data(["Sadje"], hash)
     mm.formatyear(year,w=w, l=l)
     #mm.formatmonth(2017, 10, w)
 

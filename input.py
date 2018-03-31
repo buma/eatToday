@@ -94,6 +94,9 @@ class MainWindow(QMainWindow, Ui_MainWindow):
     def init_stats(self):
         input_stats.init_stats(self)
 
+    def show_graph(self, items, dates, stat_type):
+        input_stats.show_graph(self, items, dates, stat_type)
+
     """Initializes Qt DB connection"""
     def init_db(self):
         self.db = QSqlDatabase.addDatabase('QSQLITE')
