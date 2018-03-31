@@ -1,5 +1,6 @@
 import sys
 import calendar
+import csv
 
 from PyQt5 import QtGui
 from PyQt5.QtCore import Qt,QCoreApplication
@@ -9,6 +10,7 @@ from PyQt5 import QtWidgets
 #Qt.qputenv("QT_QPA_PLATFORM", QByteArrayLiteral("minimal"));
 
 imgx, imgy = (900,1500)
+#imgx, imgy = (500,500)
 grid_size = (20,20)
 
 class SceneCalendar(calendar.Calendar):
@@ -19,10 +21,12 @@ class SceneCalendar(calendar.Calendar):
         super().__init__(firstweekday)
         self.gray_pen = QtGui.QPen(QtGui.QColor(220, 220, 220, 128))
         self.black_pen = QtGui.QPen(QtGui.QColor("black"))
+        self.blue_t_brush = QtGui.QBrush(QtGui.QColor(0,170,255, 128))
         self.font = QtGui.QFont("sans-serif", 10)
         self.arial_font = QtGui.QFont("arial", 12)
         self.arial_font.setBold(True)
         self.height=50
+        self.data_added = False
 
     def prmonth(self, theyear, themonth, w=0, l=0):
         """
@@ -34,6 +38,8 @@ class SceneCalendar(calendar.Calendar):
         """
         Return a month's calendar string (multi-line).
         """
+        self.year = theyear
+        self.month = themonth
         items = []
         month_item = self.formatmonthname(theyear, themonth, w, withyear)
         week_header_items = self.formatweekheader(w)
@@ -136,9 +142,43 @@ class SceneCalendar(calendar.Calendar):
                         rect_y+self.height/2-text_item.boundingRect().height()/2)
                 #self.scene.addItem(text_item)
                 items.append(text_item)
+                if self.data_added:
+                    item = self.format(d, rect, rect_x, rect_y, width)
+                    if item:
+                        items.append(item)
         self.next_y+=self.height
         return items
         #print ("END")
+
+    def format(self, day, rect, x, y, width):
+        #TODO: do this with dates not strings
+        #FIXME: position better
+        has_data = self.hash.get("{}-{:02d}-{:02d}".format(self.year, self.month, day),
+                False)
+        if not has_data:
+            return None
+        #print ("{}-{}-{}".format(self.year, self.month, day), has_data)
+        #print ("X: {} Y:{}".format(x, y))
+        boundingRect = rect.boundingRect()
+        transformed = (has_data-self.min_num)/self.max_num
+        allowed_max = min(boundingRect.width(), boundingRect.height())*0.9
+        new_size = allowed_max*transformed
+
+        item = QtWidgets.QGraphicsEllipseItem()
+        item.setPen(self.gray_pen)
+        item.setBrush(self.blue_t_brush)
+        item.setRect(x+width/2-new_size/2,
+                y+self.height/2-new_size/2, new_size, new_size)
+        #print ("CIRC: x:{} y:{}".format(item.pos().x(), item.pos().y()))
+        return item
+
+
+    def add_data(self, min_num, max_num, hash):
+        self.min_num = min_num
+        self.max_num = max_num
+        self.hash = hash
+        self.data_added = True
+        print ("MIN:{} MAX:{}".format(min_num, max_num))
 
     def formatyear(self, theyear, w=2, l=1, c=6, m=3):
         """
@@ -202,13 +242,26 @@ if __name__ == "__main__":
     mm = SceneCalendar(scene=scene)
     w=35
     l=1
-    year=2018
+    year=2017
     month=3
     mm.height=w
     #print(mm.formatmonthname(year,month,w))
     #print (mm.formatweekheader(w))
     #mm.prmonth(year,month,w=w, l=l)
+
+    with open("./tags_sadje.csv", "r") as f:
+        data = csv.DictReader(f)
+        hash = {}
+        min_sum=500000
+        max_sum=0
+        for line in data:
+            ws = float(line["weight_sum"])
+            hash[line["date"]]=ws
+            min_sum=min(min_sum, ws)
+            max_sum=max(max_sum, ws)
+        mm.add_data(min_sum, max_sum, hash)
     mm.formatyear(year,w=w, l=l)
+    #mm.formatmonth(2017, 10, w)
 
 
     fname="test.png"
