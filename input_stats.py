@@ -106,7 +106,9 @@ AND food_tag_item.checked = 1
     self.cb_stats.addItems(list((x.name for x in TimeSpan)))
     self.cb_stats_type.addItems(list((x.name for x in StatType)))
 
-    def update_view(input):
+
+
+    def update_start_end():
         today = self.de_stats.dateTime().toPyDateTime().date()
         time_span = TimeSpan[self.cb_stats.currentText()]
         stat_type = StatType[self.cb_stats_type.currentText()]
@@ -124,6 +126,12 @@ AND food_tag_item.checked = 1
         elif time_span == TimeSpan.YEARLY:
             start = today.replace(day=1, month=1)
         end = today+dateutil.relativedelta.relativedelta(hour=23,minute=59,second=0)
+        return start, end
+
+
+    def update_view(input):
+        stat_type = StatType[self.cb_stats_type.currentText()]
+        start, end = update_start_end()
         print (start, "-", end)
         query_both = queries[stat_type]
         if self.rb_left.isChecked():
