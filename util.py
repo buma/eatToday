@@ -1,6 +1,7 @@
 import itertools
 import re
 import math
+from enum import Enum
 
 import dateutil.relativedelta
 from sqlalchemy.orm.exc import NoResultFound
@@ -18,6 +19,18 @@ from database import (
 from gourmet_db import Nutrition
 
 from PyQt5.QtCore import QUrl
+
+class TimeSpan(Enum):
+    WEEKLY = 0
+    MONTHLY = 1
+    DAYS7 = 2
+    DAYS14 = 3
+    DAYS30 = 4
+
+class StatType(Enum):
+    INGKEY = 0
+    TAGS = 1
+    FOOD_TAGS = 2
 
 
 nondigit = re.compile("(?P<number>[\d\.]+)(?P<desc>\D+)")

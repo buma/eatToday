@@ -1,6 +1,6 @@
-from enum import Enum
 import dateutil.relativedelta
 from tabulate import tabulate
+from util import TimeSpan, StatType
 from PyQt5.QtCore import *
 from PyQt5.QtWidgets import QDialogButtonBox
 
@@ -29,17 +29,6 @@ def to_qdate(date, add=0):
     qt_date.setSecsSinceEpoch(date.timestamp()+add*3600)
     return qt_date
 
-class TimeSpan(Enum):
-    WEEKLY = 0
-    MONTHLY = 1
-    DAYS7 = 2
-    DAYS14 = 3
-    DAYS30 = 4
-
-class StatType(Enum):
-    INGKEY = 0
-    TAGS = 1
-    FOOD_TAGS = 2
 LAST_MONDAY = dateutil.relativedelta.relativedelta(
         weekday=dateutil.relativedelta.MO(-1))
 
