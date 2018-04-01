@@ -22,6 +22,7 @@ class SceneCalendar(calendar.Calendar):
         self.scene = scene
         super().__init__(firstweekday)
         self.gray_pen = QtGui.QPen(QtGui.QColor(220, 220, 220, 128))
+        self.no_pen = QtGui.QPen(Qt.NoPen)
         self.black_pen = QtGui.QPen(QtGui.QColor("black"))
         self.blue_t_brush = QtGui.QBrush(QtGui.QColor(0,170,255, 128))
         self.font = QtGui.QFont("sans-serif", 10)
@@ -30,7 +31,7 @@ class SceneCalendar(calendar.Calendar):
         self.height=50
         self.data_added = False
         self.make_colors()
-        self.format_func = self.circle_chart
+        self.format_func = self.bar_chart
 
     def make_colors(self):
         self.colors = []
@@ -159,12 +160,38 @@ class SceneCalendar(calendar.Calendar):
                 #self.scene.addItem(text_item)
                 items.append(text_item)
                 if self.data_added:
-                    item = self.format(d, rect, rect_x, rect_y, width)
-                    if item:
-                        items.append(item)
+                    cur_items = self.format(d, rect, rect_x, rect_y, width)
+                    if cur_items:
+                        items.extend(cur_items)
         self.next_y+=self.height
         return items
         #print ("END")
+
+    def bar_chart(self, datas, rect, x, y):
+        """Draws bar chart in calendar box"""
+        items = []
+        boundingRect = rect.boundingRect()
+        width = boundingRect.width()
+        num_items = len(self.items)
+        bar_width = 8
+        left_right_padding = 2
+        padding = (width-2*left_right_padding-bar_width*num_items)/(num_items-1)
+        cur_x = x+left_right_padding
+        #print ("PADDING:", padding)
+        #cur_x+=bar_width+padding
+        #TODO: make charts from the bottom
+        for i, item in enumerate(self.items):
+            transformed = datas.get(item, None)
+            #print ("cur_x", cur_x)
+            if transformed is not None:
+                bar = QtWidgets.QGraphicsRectItem(rect)
+                bar.setBrush(self.brushes[i])
+                bar.setPen(self.no_pen)
+                bar.setRect(cur_x, y, bar_width,
+                        transformed*boundingRect.height())
+                items.append(bar)
+            cur_x+=bar_width+padding
+        return items
 
     def circle_chart(self, datas, rect, x, y):
         """Draws a circle in a center of a chart. Size depends on value"""
@@ -178,12 +205,12 @@ class SceneCalendar(calendar.Calendar):
         new_size = allowed_max*transformed
 
         item = QtWidgets.QGraphicsEllipseItem()
-        item.setPen(self.gray_pen)
+        item.setPen(self.no_pen)
         item.setBrush(self.brushes[0])
         item.setRect(x+boundingRect.width()/2-new_size/2,
                 y+self.height/2-new_size/2, new_size, new_size)
         #print ("CIRC: x:{} y:{}".format(item.pos().x(), item.pos().y()))
-        return item
+        return [item]
 
     def format(self, day, rect, x, y, width):
         #TODO: do this with dates not strings
