@@ -7,6 +7,8 @@ from PyQt5.QtCore import Qt,QCoreApplication
 from PyQt5.QtWidgets import QGraphicsScene, QApplication
 from PyQt5 import QtWidgets
 
+#Color palete
+from palettable.tableau import GreenOrange_6 as Palette
 #Qt.qputenv("QT_QPA_PLATFORM", QByteArrayLiteral("minimal"));
 
 imgx, imgy = (900,1500)
@@ -27,6 +29,20 @@ class SceneCalendar(calendar.Calendar):
         self.arial_font.setBold(True)
         self.height=50
         self.data_added = False
+        self.make_colors()
+        self.format_func = self.circle_chart
+
+    def make_colors(self):
+        self.colors = []
+        self.brushes = []
+        alpha=128
+        for rgb_color in Palette.colors:
+            r,g,b = rgb_color
+            qcolor = QtGui.QColor(r, g,b, alpha)
+            self.colors.append(qcolor)
+            self.brushes.append(QtGui.QBrush(qcolor))
+
+
 
     def prmonth(self, theyear, themonth, w=0, l=0):
         """
@@ -150,6 +166,25 @@ class SceneCalendar(calendar.Calendar):
         return items
         #print ("END")
 
+    def circle_chart(self, datas, rect, x, y):
+        """Draws a circle in a center of a chart. Size depends on value"""
+        if len(self.items) > 1:
+            raise Exception("Circle formatting is only supported for one item")
+        transformed = datas[self.items[0]]
+        #print ("{}-{}-{}".format(self.year, self.month, day), has_data)
+        #print ("X: {} Y:{}".format(x, y))
+        boundingRect = rect.boundingRect()
+        allowed_max = min(boundingRect.width(), boundingRect.height())*0.9
+        new_size = allowed_max*transformed
+
+        item = QtWidgets.QGraphicsEllipseItem()
+        item.setPen(self.gray_pen)
+        item.setBrush(self.brushes[0])
+        item.setRect(x+boundingRect.width()/2-new_size/2,
+                y+self.height/2-new_size/2, new_size, new_size)
+        #print ("CIRC: x:{} y:{}".format(item.pos().x(), item.pos().y()))
+        return item
+
     def format(self, day, rect, x, y, width):
         #TODO: do this with dates not strings
         #FIXME: position better
@@ -157,31 +192,19 @@ class SceneCalendar(calendar.Calendar):
                 False)
         if not has_data:
             return None
-        #FIXME: temporary hack so that only one hash is used
-        has_data = has_data.get(self.items[0], None) 
-        if not has_data:
-            return None
 
-        #print ("{}-{}-{}".format(self.year, self.month, day), has_data)
-        #print ("X: {} Y:{}".format(x, y))
-        boundingRect = rect.boundingRect()
-        transformed = has_data
-        allowed_max = min(boundingRect.width(), boundingRect.height())*0.9
-        new_size = allowed_max*transformed
+        return self.format_func(has_data,rect, x, y)
 
-        item = QtWidgets.QGraphicsEllipseItem()
-        item.setPen(self.gray_pen)
-        item.setBrush(self.blue_t_brush)
-        item.setRect(x+width/2-new_size/2,
-                y+self.height/2-new_size/2, new_size, new_size)
-        #print ("CIRC: x:{} y:{}".format(item.pos().x(), item.pos().y()))
-        return item
 
 
     def add_data(self, items, hash):
         self.items = items
         self.hash = hash
         self.data_added = True
+        if len(items) > Palette.number:
+            raise Exception(
+                    "Curently no more then {} colors are supported".format(
+                        Palette.number))
 
     def formatyear(self, theyear, w=2, l=1, c=6, m=3):
         """
