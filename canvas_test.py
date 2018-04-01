@@ -209,7 +209,8 @@ class SceneCalendar(calendar.Calendar):
         num_items = len(self.items)
         bar_width = 8
         left_right_padding = 2
-        padding = (width-2*left_right_padding-bar_width*num_items)/(num_items-1)
+        paddings_needed = max(num_items-1,1)
+        padding = (width-2*left_right_padding-bar_width*num_items)/paddings_needed
         cur_x = x+left_right_padding
         #print ("PADDING:", padding)
         #cur_x+=bar_width+padding
