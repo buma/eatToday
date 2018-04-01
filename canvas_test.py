@@ -6,6 +6,7 @@ from PyQt5 import QtGui
 from PyQt5.QtCore import Qt,QCoreApplication
 from PyQt5.QtWidgets import QGraphicsScene, QApplication
 from PyQt5 import QtWidgets
+from enum import Enum
 
 #Color palete
 from palettable.tableau import GreenOrange_6 as Palette
@@ -14,6 +15,10 @@ from palettable.tableau import GreenOrange_6 as Palette
 imgx, imgy = (900,1500)
 #imgx, imgy = (500,500)
 grid_size = (20,20)
+
+class FormatFunc(Enum):
+    CIRCLE = 0
+    BAR_CHART = 1
 
 class SceneCalendar(calendar.Calendar):
     """This calendar renders scene"""
@@ -31,7 +36,11 @@ class SceneCalendar(calendar.Calendar):
         self.height=50
         self.data_added = False
         self.make_colors()
-        self.format_func = self.bar_chart
+        self.format_type = FormatFunc.BAR_CHART
+        if self.format_type == FormatFunc.BAR_CHART:
+            self.format_func = self.bar_chart
+        elif self.format_type == FormatFunc.CIRCLE:
+            self.format_func = self.circle_chart
 
     def make_colors(self):
         self.colors = []
