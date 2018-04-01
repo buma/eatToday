@@ -211,7 +211,11 @@ class SceneCalendar(calendar.Calendar):
         left_right_padding = 2
         paddings_needed = max(num_items-1,1)
         padding = (width-2*left_right_padding-bar_width*num_items)/paddings_needed
-        cur_x = x+left_right_padding
+        #Center one bar
+        if num_items == 1:
+            cur_x = x+(width/2)-bar_width/2
+        else:
+            cur_x = x+left_right_padding
         #print ("PADDING:", padding)
         #cur_x+=bar_width+padding
         for i, item in enumerate(self.items):
