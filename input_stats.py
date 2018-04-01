@@ -312,6 +312,8 @@ def show_graph(self, items, dates, stat_type):
         for item in items:
             min_max[item]={"min": 99999, "max":0}
         hash = defaultdict(dict)
+        #TODO: does it make sense to search for mean max of specific items
+        #Wouldn't one min/max be better?
         if query_.exec_():
             while query_.next():
                 item = query_.value(0)
@@ -321,8 +323,8 @@ def show_graph(self, items, dates, stat_type):
                 min_max[item]["max"]=max(min_max[item]["max"], weight)
                 hash[item_date][item]=weight
             hash.default_factory = None
-            print (min_max)
-            print (hash)
+            #print (min_max)
+            #print (hash)
             #Scales values from min to max to 0-1
             for values in hash.values():
                 for item, weight in values.items():
@@ -332,7 +334,7 @@ def show_graph(self, items, dates, stat_type):
                         values[item] = weight/max_val
                     else:
                         values[item]=(weight-min_val)/(max_val-min_val)
-            print (hash)
+            #print (hash)
             cd = ChartDialog(self)
 
             cd.set_calendar_chart(items,hash)
