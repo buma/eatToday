@@ -1,6 +1,7 @@
 import sys
 import calendar
 import csv
+from itertools import groupby
 
 from PyQt5 import QtGui
 from PyQt5.QtCore import Qt,QCoreApplication
@@ -271,6 +272,14 @@ class SceneCalendar(calendar.Calendar):
             raise Exception(
                     "Curently no more then {} colors are supported".format(
                         Palette.number))
+        #Groups by year and month so that only some months can be shown
+        self.specific_months=[]
+        for key,g in groupby(self.hash.keys(), lambda x:
+                x.split("-")[:2]):
+            #print (key)
+            year, month = key
+            self.specific_months.append((int(year), int(month)))
+
 
     def formatyear(self, theyear, w=2, l=1, c=6, m=3):
         """
@@ -284,7 +293,11 @@ class SceneCalendar(calendar.Calendar):
         left_right_padding = 10
         padding = (self.scene.width()-2*left_right_padding-full_size)/(m-1)
         print ("FULL:", full_size, padding)
-        text_item = QtWidgets.QGraphicsTextItem(str(theyear))
+        if theyear is None:
+            year = "Delno"
+        else:
+            year = theyear
+        text_item = QtWidgets.QGraphicsTextItem(str(year))
         text_item.setFont(self.arial_font)
         text_width = text_item.boundingRect().width()
         text_item.setPos(self.scene.width()/2-text_width/2,
@@ -292,12 +305,20 @@ class SceneCalendar(calendar.Calendar):
         self.scene.addItem(text_item)
         line = 0
         #line_height = 0
-        for i in range(0, 12):
+        if theyear is None:
+            num_months = len(self.specific_months)
+        else:
+            num_months = 12
+        for i in range(0, num_months):
             if i%m == 0:
                 line+=1
                 #line_height = 0
             print (i+1, line)
-            group = self.formatmonth(theyear, i+1, w, l, withyear=False)
+            if theyear is None:
+                year, month = self.specific_months[i]
+                group = self.formatmonth(year, month, w, l, withyear=True)
+            else:
+                group = self.formatmonth(theyear, i+1, w, l, withyear=False)
             #line_height = max(line_height, group.boundingRect().height())
             group.setPos(left_right_padding+i%m*7*w+i%m*padding,
                     (line-1)*(6*self.height+80)+10+y_add)

@@ -26,5 +26,9 @@ class ChartDialog(QDialog, Ui_ChartDialog):
             ",".join(items)))
         sc = SceneCalendar(scene=self.scene)
         sc.add_data(items, hash)
-        sc.height=35
-        sc.formatyear(2018, w=35)
+        if len(sc.specific_months) == 1:
+            sc.height=50
+            sc.prmonth(sc.specific_months[0][0], sc.specific_months[0][1], w=50)
+        else:
+            sc.height=35
+            sc.formatyear(None, w=35)
