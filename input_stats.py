@@ -301,7 +301,10 @@ def show_graph(self, items, dates, stat_type):
                 for item, weight in values.items():
                     min_val = min_max[item]["min"]
                     max_val = min_max[item]["max"]
-                    values[item]=(weight-min_val)/(max_val-min_val)
+                    if min_val == max_val:
+                        values[item] = weight/max_val
+                    else:
+                        values[item]=(weight-min_val)/(max_val-min_val)
             print (hash)
             cd = ChartDialog(self)
 
