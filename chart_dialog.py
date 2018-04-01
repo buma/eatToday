@@ -3,7 +3,8 @@ from PyQt5.QtGui  import *
 from PyQt5.QtWidgets import (
         QDialog,
         QLabel,
-        QGraphicsScene
+        QGraphicsScene,
+        QFileDialog
         )
 
 from ui_chart_view import Ui_ChartDialog
@@ -18,8 +19,12 @@ class ChartDialog(QDialog, Ui_ChartDialog):
 
     def initUI(self):
         #TODO: size this based on dialog size?
-        self.scene = QGraphicsScene(0,0,900,1500, self)
+        self.imgx, self.imgy = 900,1500
+        self.scene = QGraphicsScene(0,0,self.imgx,self.imgy, self)
+        #self.scene = QGraphicsScene(0,0,500,500, self)
         self.gv.setScene(self.scene)
+        self.pb_save_image.clicked.connect(self.save_image)
+        #self.actionSave_image.trigger(self.save_image)
 
     def set_calendar_chart(self, items, hash):
         self.lbl_title.setText("Calendar showing of {}".format(
@@ -32,3 +37,15 @@ class ChartDialog(QDialog, Ui_ChartDialog):
         else:
             sc.height=35
             sc.formatyear(None, w=35)
+
+    def save_image(self, checked):
+        fname = QFileDialog.getSaveFileName(self, "Save scene")
+        if fname and fname[0]:
+            print(fname)
+            image = QImage(self.imgx, self.imgy,
+                    QImage.Format_ARGB32)
+            painter = QPainter(image)
+            painter.setRenderHint(QPainter.Antialiasing)
+            self.scene.render(painter)
+            image.save(fname[0])
+            painter.end()
