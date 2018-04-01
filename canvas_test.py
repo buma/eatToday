@@ -214,7 +214,6 @@ class SceneCalendar(calendar.Calendar):
         cur_x = x+left_right_padding
         #print ("PADDING:", padding)
         #cur_x+=bar_width+padding
-        #TODO: make charts from the bottom
         for i, item in enumerate(self.items):
             transformed = datas.get(item, None)
             #print ("cur_x", cur_x)
@@ -222,8 +221,9 @@ class SceneCalendar(calendar.Calendar):
                 bar = QtWidgets.QGraphicsRectItem(rect)
                 bar.setBrush(self.brushes[i])
                 bar.setPen(self.no_pen)
-                bar.setRect(cur_x, y, bar_width,
-                        transformed*boundingRect.height())
+                bar_height = transformed*boundingRect.height()
+                bar.setRect(cur_x, y+(boundingRect.height()-bar_height), bar_width,
+                        bar_height)
                 items.append(bar)
             cur_x+=bar_width+padding
         return items
