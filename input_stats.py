@@ -55,9 +55,25 @@ WHERE foodnutrition_details_alias_time.eat_time BETWEEN :start AND :end
  ORDER BY foodnutrition_details_alias_time.eat_time
 """
 
+food_tags_specific = """
+    SELECT food_tag.name AS tag_name, sum(foodnutrition_details.weight * 100)
+    AS weight_sum,
+strftime('%Y-%m-%d', eat.time),
+    count(DISTINCT eat.id) AS tag_app
+FROM food_tag, foodnutrition_details, eat, food_tag_item
+WHERE eat.time BETWEEN :start AND :end AND  foodnutrition_details.fn_id = eat.calc_nutrition AND
+foodnutrition_details.fn_id = food_tag_item.fn_id
+AND food_tag_item.tag_id = food_tag.id
+AND food_tag_item.checked = 1
+AND food_tag.name IN (:ITEMS:)
+GROUP BY strftime('%Y-%m-%d', eat.time), food_tag.id
+ORDER BY eat.time
+ """
+
 graph_queries = {
         StatType.TAGS: tags_specific_query,
-        StatType.INGKEY: ingkeys_specific_query
+        StatType.INGKEY: ingkeys_specific_query,
+        StatType.FOOD_TAGS: food_tags_specific
         }
 
 
