@@ -54,11 +54,36 @@ class SceneCalendar(calendar.Calendar):
 
 
 
-    def prmonth(self, theyear, themonth, w=0, l=0):
+
+    def add_legend(self):
+        if not self.data_added:
+            return 0
+        for i, item in enumerate(self.items):
+            #Name of item
+            text_item = QtWidgets.QGraphicsTextItem(item)
+            text_item.setFont(self.font)
+            text_height = text_item.boundingRect().height()
+
+            #Colored square at the start
+            rect = QtWidgets.QGraphicsRectItem()
+            rect.setRect(10, i*text_height, text_height*0.8, text_height*0.8)
+            rect.setPen(self.no_pen)
+            rect.setBrush(self.brushes[i])
+
+            text_item.setPos(10+text_height*0.8+10, i*text_height)
+            self.scene.addItem(text_item)
+            self.scene.addItem(rect)
+        return (i+1)*text_height
+
+
+    def prmonth(self, theyear, themonth, w=0, l=0, withyear=True):
         """
         Print a month's calendar.
         """
-        print(self.formatmonth(theyear, themonth, w, l), end='')
+        down = self.add_legend()
+        group = self.formatmonth(theyear, themonth, w, l, withyear)
+
+        group.setPos(0, down)
 
     def formatmonth(self, theyear, themonth, w=0, l=0, withyear=True):
         """
@@ -246,6 +271,8 @@ class SceneCalendar(calendar.Calendar):
         """
         Returns a year's calendar as a multi-line string.
         """
+        y_add = self.add_legend()
+        #print ("YADD:", y_add)
         self.padding=10
         #Size of month 7*days*number of month columns
         full_size=7*w*m
@@ -256,7 +283,7 @@ class SceneCalendar(calendar.Calendar):
         text_item.setFont(self.arial_font)
         text_width = text_item.boundingRect().width()
         text_item.setPos(self.scene.width()/2-text_width/2,
-                0)
+                y_add)
         self.scene.addItem(text_item)
         line = 0
         #line_height = 0
@@ -268,7 +295,7 @@ class SceneCalendar(calendar.Calendar):
             group = self.formatmonth(theyear, i+1, w, l, withyear=False)
             #line_height = max(line_height, group.boundingRect().height())
             group.setPos(left_right_padding+i%m*7*w+i%m*padding,
-                    (line-1)*(6*self.height+80)+10)
+                    (line-1)*(6*self.height+80)+10+y_add)
 
 if __name__ == "__main__":
     #app = QCoreApplication(sys.argv)
