@@ -45,8 +45,19 @@ GROUP BY strftime('%Y-%m-%d', eat.time), tag.id
 ORDER BY eat.time
 """
 
+ingkeys_specific_query = """
+SELECT foodnutrition_details_alias_time.nutritionaliases_ingkey AS ingkey, sum(foodnutrition_details_alias_time.foodnutrition_details_weight * 100) AS weight_sum,
+strftime('%Y-%m-%d', foodnutrition_details_alias_time.eat_time) as s
+FROM foodnutrition_details_alias_time
+WHERE foodnutrition_details_alias_time.eat_time BETWEEN :start AND :end
+ AND foodnutrition_details_alias_time.nutritionaliases_ingkey IN (:ITEMS:)
+ GROUP BY strftime('%Y-%m-%d', foodnutrition_details_alias_time.eat_time), foodnutrition_details_alias_time.foodnutrition_details_ndbno
+ ORDER BY foodnutrition_details_alias_time.eat_time
+"""
+
 graph_queries = {
-        StatType.TAGS: tags_specific_query
+        StatType.TAGS: tags_specific_query,
+        StatType.INGKEY: ingkeys_specific_query
         }
 
 
