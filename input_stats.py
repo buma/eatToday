@@ -287,12 +287,22 @@ AND food_tag_item.checked = 1
         stat_type = StatType[self.cb_stats_type.currentText()]
         show_graph(self, items, dates, stat_type)
 
+    def selection_changed():
+        if self.rb_left.isChecked():
+            current_tv = self.tv_stats
+        else:
+            current_tv = self.tv_stats_right
+        indexes = current_tv.selectedIndexes()
+        self.pb_stats_chart.setEnabled(len(indexes) > 0)
+
 
     self.de_stats.dateChanged.connect(update_view)
     self.cb_stats.currentIndexChanged.connect(update_view)
     self.cb_stats_type.currentIndexChanged.connect(update_view)
     self.btn_compare.clicked.connect(compare)
     self.pb_stats_chart.clicked.connect(show_stats_chart)
+    self.tv_stats.selectionModel().selectionChanged.connect(selection_changed)
+    self.tv_stats_right.selectionModel().selectionChanged.connect(selection_changed)
     update_view(self.de_stats.dateTime())
 
 def show_graph(self, items, dates, stat_type):
