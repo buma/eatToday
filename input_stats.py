@@ -234,12 +234,14 @@ AND food_tag_item.checked = 1
         before_items_set = set(before_items)
         now_items_set = set(now_items)
         print ("Eaten before but not this week:")
-        for item in before_items_set.difference(now_items_set):
+        eaten_before = before_items_set.difference(now_items_set)
+        for item in eaten_before:
             print(item)
 
         print()
+        eaten_this_week = now_items_set.difference(before_items_set)
         print ("Eaten this week but not week before:")
-        for item in now_items_set.difference(before_items_set):
+        for item in eaten_this_week:
             print (item)
 
         print()
@@ -263,6 +265,14 @@ AND food_tag_item.checked = 1
         print (tabulate(table_high, headers=["Item", "before", "after"]))
         print ("Same then before:") 
         print (tabulate(table_eq, headers=["Item", "before", "after"]))
+        cd = ChartDialog(self)
+        stat_type = StatType[self.cb_stats_type.currentText()]
+        time_span = TimeSpan[self.cb_stats.currentText()]
+
+        cd.set_comparision_chart(stat_type, time_span, dates_left[0],
+                eaten_before, eaten_this_week, table_low, table_high,
+                table_eq)
+        cd.show()
 
     def show_stats_chart():
         print ("Showing stats chart")

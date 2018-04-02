@@ -4,11 +4,15 @@ from PyQt5.QtWidgets import (
         QDialog,
         QLabel,
         QGraphicsScene,
-        QFileDialog
+        QFileDialog,
+        QGraphicsTextItem
         )
 
 from ui_chart_view import Ui_ChartDialog
 from canvas_test import SceneCalendar
+from ComparisionChart import ComparisionChart
+
+
 
 class ChartDialog(QDialog, Ui_ChartDialog):
     def __init__(self, parent = None):
@@ -19,7 +23,7 @@ class ChartDialog(QDialog, Ui_ChartDialog):
 
     def initUI(self):
         #TODO: size this based on dialog size?
-        self.imgx, self.imgy = 900,1500
+        self.imgx, self.imgy = 900,1800
         self.scene = QGraphicsScene(0,0,self.imgx,self.imgy, self)
         #self.scene = QGraphicsScene(0,0,500,500, self)
         self.gv.setScene(self.scene)
@@ -37,6 +41,25 @@ class ChartDialog(QDialog, Ui_ChartDialog):
         else:
             sc.height=35
             sc.formatyear(None, w=35)
+
+    def set_comparision_chart(self, stat_type, time_span, date_range,
+            eaten_before, eaten_this_week, table_low, table_high, table_eq):
+        #import pickle
+        #with open("cache_chart.pkl", "wb") as cache_chart:
+            #pickle.dump((eaten_before, eaten_this_week, table_low, table_high,
+                #table_eq), cache_chart)
+        #with open("cache_chart.pkl", "rb") as cache_chart:
+            #eaten_before, eaten_this_week, table_low, \
+                #table_high, table_eq = pickle.load(cache_chart)
+        start, end = date_range
+        self.lbl_title.setText(
+                "Showing {} comparision in {} between {} - {}".format(
+                    time_span, stat_type,start, end))
+
+        cc = ComparisionChart(self.scene, eaten_before, eaten_this_week,
+                table_low, table_high, table_eq)
+        cc.draw()
+
 
     def save_image(self, checked):
         fname = QFileDialog.getSaveFileName(self, "Save scene")
