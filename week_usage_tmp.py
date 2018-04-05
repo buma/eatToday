@@ -163,6 +163,7 @@ def make_food_tags(ingkeys, tag_names, descs):
             ("quesadillas", ["quesadillas", "tortilla_stuff"]),
             ("tortilje", "tortilla_stuff"),
             ("juha", "juha"),
+            ("juhe", "juha"),
             ("golaž", "golaž"),
             ("obara", "obara")
             ]
