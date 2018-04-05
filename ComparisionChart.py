@@ -87,11 +87,20 @@ class ComparisionChart(object):
         
     def add_chart(self, text, data, eq=False):
         items = []
+
         text_item = QGraphicsTextItem(text)
         text_item.setFont(ComparisionChart.arial_font)
         text_item.setPos(0,0)
         items.append(text_item)
         next_y = text_item.boundingRect().height()+5
+        if not data:
+            text_item = QGraphicsTextItem("prazno")
+            text_item.setFont(ComparisionChart.font)
+            text_item.setPos(0,next_y)
+            items.append(text_item)
+
+            group = self.scene.createItemGroup(items)
+            return group
 
         item_max = 0
         before_max = len("before")
