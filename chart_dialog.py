@@ -1,3 +1,4 @@
+from tabulate import tabulate
 from PyQt5.QtCore import *
 from PyQt5.QtGui  import *
 from PyQt5.QtWidgets import (
@@ -59,6 +60,27 @@ class ChartDialog(QDialog, Ui_ChartDialog):
         cc = ComparisionChart(self.scene, eaten_before, eaten_this_week,
                 table_low, table_high, table_eq)
         cc.draw()
+
+    def set_day_chart(self,header, day, chart_title, data):
+        self.lbl_title.setText(chart_title.format(day,day))
+        print (chart_title.format(day, day))
+        maxes = []
+        for i in range(len(header)-2):
+            maxes.append(0)
+        #print (header, maxes)
+        for line in data:
+            for i in range(len(maxes)):
+                maxes[i]=max(line[i+2],maxes[i])
+        #print (maxes)
+        #FIXME: temporary display
+        #TODO: this needs to be shown as text items, so that barchart can be
+        #shown in each column in percentage of max or percentage of all
+        #TODO: maybe clicking on food would open nutrition with same info?
+        txt= (tabulate(data, headers=header))
+        font = QFont("monospace", 9)
+        text_item = QGraphicsTextItem(txt)
+        text_item.setFont(font)
+        self.scene.addItem(text_item)
 
 
     def save_image(self, checked):

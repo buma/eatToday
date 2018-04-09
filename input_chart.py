@@ -14,6 +14,7 @@ from database import (
         Item, LocalNutrition, LocalNutritionaliase, FoodNutrition,
         Tag, TagItem, UsdaWeight)
 from config import (needed_kcal, needed_protein)
+from chart_dialog import ChartDialog
 
 def to_qdate(date, add=0):
     """Creates QDateTime from pytho date
@@ -497,6 +498,33 @@ def init_chart(self):
         chart.legend().setVisible(True)
         chart.legend().setAlignment(Qt.AlignBottom)
 
+    def show_daily_chart():
+        today = self.de_chart.dateTime().toPyDateTime().date()
+        tomorow = today+dateutil.relativedelta.relativedelta(hour=23,minute=59,second=0)
+        title, chart_title, data, func, *rest  = self.idx_kcal[self.cb_kcal_chart_type.currentIndex()]
+        print ("Daily chart:", today, tomorow, title)
+        item_datas = []
+        items = self.session.query(Item) \
+                .options(joinedload(Item.nutri_info)) \
+                .filter(Item.calc_nutrition != None) \
+                .filter(Item.time.between(today, tomorow)) \
+                .order_by(Item.time)
+        keys = list(data.keys())
+        for item in items:
+            item_data = [item.time, item.description[:20]]
+            for key in keys:
+                #print ("KEY:", key)
+                item_data.append(func(key,getattr(item.nutri_info, key)))
+            item_datas.append(item_data)
+        header = ["time", "desc"] + keys
+        #for time, desc, *rest in item_datas:
+            #print (time, desc,)
+            #for t in rest:
+                #print("{:.2f}".format(t))
+        cd = ChartDialog(self)
+        cd.set_day_chart(header, today, chart_title, item_datas)
+        cd.show()
+
 
     self.chart_date_changed = chart_date_changed
     self.init_kcal_week_chart = init_kcal_week_chart
@@ -505,6 +533,7 @@ def init_chart(self):
     self.chart_date_changed(self.de_chart.dateTime())
     self.cb_kcal_chart_type.currentIndexChanged.connect(lambda idx:
             self.init_kcal_week_chart(self.de_chart.dateTime(), idx))
+    self.pb_show_day_chart.clicked.connect(show_daily_chart)
     #today = self.de_chart.selecte
 
 
