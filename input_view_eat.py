@@ -7,6 +7,8 @@ from PyQt5.QtWidgets import QDialogButtonBox
 from PyQt5.QtWidgets import (
         QCompleter,
         QMessageBox,
+        QAction,
+        QMenu
         )
 from PyQt5.QtSql import (
         QSqlRelation,
@@ -18,6 +20,7 @@ from PyQt5.QtSql import (
 
 from search_dsl import SQLTransformer, InvalidField
 from help_dialog import HelpDialog
+from util import show_before as show_before_sql
 
 def init_view_eat(self):
     print ("Init view eat")
@@ -74,7 +77,58 @@ def init_view_eat(self):
         saved_searches.append(search)
         json.dump(saved_searches, open("searches.json", "w"))
 
+    def show_context_menu(point):
+        print ("POINT:", point)
+
+        x = point.x()
+        y = point.y()
+
+        model = self.tv_search_eat.model()
+        source_model = model.sourceModel()
+
+
+        column = self.tv_search_eat.columnAt(x)
+        column_title = model.headerData(column, Qt.Horizontal)
+
+        if column_title != "id":
+            return
+        row = self.tv_search_eat.rowAt(y)
+
+        index = self.tv_search_eat.indexAt(point)
+        mapped_index = model.mapToSource(index)
+
+        val = source_model.data(mapped_index)
+
+        #print ("ColID:", column)
+        print (model.headerData(column, Qt.Horizontal))
+        #print ("VAL:", val)
+
+        def show_before(eat_id):
+            print ("SHOWING BEFORE:", eat_id)
+            print (show_before_sql(eat_id, self.session, 48))
+
+        def show_after(eat_id):
+            print ("SHOWING AFTER:", eat_id)
+            print (show_before_sql(eat_id, self.session, -48))
+
+
+        before_acct = QAction("&Before", self)
+        before_acct.setStatusTip("Show food before this time")
+        before_acct.triggered.connect(lambda: show_before(val))
+
+        after_acct = QAction("&After", self)
+        after_acct.setStatusTip("Show stanje/kaka after this time")
+        after_acct.triggered.connect(lambda: show_after(val))
+
+        menu = QMenu(self)
+        menu.addAction(before_acct)
+        menu.addAction(after_acct)
+        menu.exec_(self.tv_search_eat.mapToGlobal(point))
+
+    
+
     self.pb_search.clicked.connect(search)
     self.pb_search_help.clicked.connect(show_help)
     self.cb_searches.currentTextChanged.connect(select_saved_search)
     self.pb_add_saved_search.clicked.connect(add_saved_search)
+    self.tv_search_eat.customContextMenuRequested.connect(show_context_menu)

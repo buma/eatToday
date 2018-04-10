@@ -6,6 +6,7 @@ from enum import Enum
 import dateutil.relativedelta
 from sqlalchemy.orm.exc import NoResultFound
 from sqlalchemy import func
+from tabulate import tabulate
 from database import (
         Item,
         LocalNutrition,
@@ -415,14 +416,18 @@ def show_before(eat_id, session, hours=24):
     item=session.query(Item).get(eat_id)
     print (item)
     time = item.time
-    begin=time-dateutil.relativedelta.relativedelta(hours=hours)
+    if hours < 0:
+        begin = time
+        time = time+dateutil.relativedelta.relativedelta(hours=-1*hours)
+    else:
+        begin=time-dateutil.relativedelta.relativedelta(hours=hours)
     print (begin,"-",time)
-    items = session.query(Item) \
+    #TODO: Shorter time display, show time from start on each item
+    items = session.query(Item.id, Item.time, Item.type, Item.description) \
             .filter(Item.time.between(begin,time)) \
             .filter(Item.type != "PIPI") \
             .order_by(Item.time)
-    for item in items:
-        print (item)
+    return tabulate(items, headers=["id", "time", "type", "description"])
 
 def init_nutrition_view(self):
     self.skip = set(["ndbno", "foodgroup", "gramwt1",
