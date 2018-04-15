@@ -69,6 +69,7 @@ class ChartDialog(QDialog, Ui_ChartDialog):
             maxes.append(0)
         #print (header, maxes)
         for line in data:
+            line[0] = line[0].strftime("%H:%M")
             for i in range(len(maxes)):
                 maxes[i]=max(line[i+2],maxes[i])
         #print (maxes)
