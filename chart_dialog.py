@@ -71,7 +71,10 @@ class ChartDialog(QDialog, Ui_ChartDialog):
         for line in data:
             line[0] = line[0].strftime("%H:%M")
             for i in range(len(maxes)):
-                maxes[i]=max(line[i+2],maxes[i])
+                cur_value = line[i+2]
+                if cur_value is None:
+                    cur_value = 0
+                maxes[i]=max(cur_value,maxes[i])
         #print (maxes)
         #FIXME: temporary display
         #TODO: this needs to be shown as text items, so that barchart can be
