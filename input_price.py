@@ -68,6 +68,8 @@ def init_price(self):
 
     self.tv_price_view.setModel(proxy_model)
     self.tv_price_view.setSortingEnabled(True)
+    self.tv_price_view.horizontalHeader().setToolTip("protein/kcal_price "
+            "higher is better")
 
 
 
