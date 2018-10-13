@@ -350,10 +350,13 @@ def show_graph(self, items, dates, stat_type):
                 for item, weight in values.items():
                     min_val = min_max[item]["min"]
                     max_val = min_max[item]["max"]
-                    if min_val == max_val:
-                        values[item] = weight/max_val
-                    else:
-                        values[item]=(weight-min_val)/(max_val-min_val)
+                    #min_val = min_max_all["min"]
+                    #max_val = min_max_all["max"]
+                    #if min_val == max_val:
+                    values[item] = weight/max_val
+                    #Not sure where is this needed it makes wrong chart:
+                    #else:
+                        #values[item]=(weight-min_val+1)/(max_val-min_val)
             #print (hash)
             cd = ChartDialog(self)
 
