@@ -100,7 +100,8 @@ class SessionThread(Thread):
                 minutes=7)
         rets = get_sum(self.session, today, end1)
         end1 = end + dateutil.relativedelta.relativedelta(
-                minutes=35)
+                minutes=35) #(40+30+20)) #35) njoki morjo 30 min počivat pa 40min se
+        #kuha
         rets += get_sum(self.session, today, end1)
         rets = sorted(rets, key=lambda x: (x[1], x[3]))
         ln = None
