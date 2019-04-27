@@ -12,7 +12,8 @@ from database import (
         LocalNutritionaliase,
         FoodNutrition,
         FoodNutritionDetails,
-        UsdaWeight
+        UsdaWeight,
+        Price
         )
 from gourmet_db import Nutrition
 from util import get_amounts, get_nutrition, calculate_nutrition, add_nutrition_details
@@ -25,6 +26,7 @@ Session = sessionmaker()
 Session.configure(binds={Item: engine,
     Nutrition: gourmet_engine,
     #Nutritionaliase: gourmet_engine,
+    Price: engine, 
     LocalNutrition: engine,
     LocalNutritionaliase: engine,
     FoodNutrition: engine,

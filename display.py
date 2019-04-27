@@ -171,6 +171,7 @@ def show_date(date):
 #for date in dates:
     #show_part = set()
     #show_date(date)
+show_part = set()
 now = datetime.datetime.now()
 #yesterday = (now-dateutil.relativedelta.relativedelta(days=6)) # (now-dateutil.relativedelta.relativedelta(days=1))
 yesterday =  (now-dateutil.relativedelta.relativedelta(days=1))

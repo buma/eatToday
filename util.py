@@ -452,11 +452,11 @@ def show_nutrition_view(self, nutrition, session):
     caloric_ratio = calculation.caloric_ratio
     txt = ("Fullness Factor:{}\n Calories from "  \
     "CARB:{} FAT:{} PROT:{}\n"  \
-    "percentage CARB:FAT:PROT {}:{}:{}".format(
+    "percentage CARB:FAT:PROT {}:{}:{}\nMagnesium:{}".format(
             calculation.fullness_factor,caloric_ratio["cal_from_carb"],
             caloric_ratio["cal_from_fat"], caloric_ratio["cal_from_prot"],
             caloric_ratio["perc_carb"], caloric_ratio["perc_fat"],
-            caloric_ratio["perc_prot"]))
+            caloric_ratio["perc_prot"], calculation.magnesium))
 
     self.lbl_nutrition.setText(txt)
     nutri_list = ",".join(get_nutrition_list(nutrition, self.session))

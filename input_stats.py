@@ -329,6 +329,7 @@ def show_graph(self, items, dates, stat_type):
         query_.bindValue(":start", str(start))
         query_.bindValue(":end", str(end))
         min_max = {}
+        min_max_all = {"min":99999, "max":0}
         for item in items:
             min_max[item]={"min": 99999, "max":0}
         hash = defaultdict(dict)
@@ -341,10 +342,14 @@ def show_graph(self, items, dates, stat_type):
                 item_date = query_.value(2)
                 min_max[item]["min"]=min(min_max[item]["min"], weight)
                 min_max[item]["max"]=max(min_max[item]["max"], weight)
+
+                min_max_all["max"] = max(min_max_all["max"], weight)
+                min_max_all["min"] = min(min_max_all["min"], weight)
                 hash[item_date][item]=weight
             hash.default_factory = None
-            #print (min_max)
-            #print (hash)
+            print (min_max)
+            print (min_max_all)
+            print (hash)
             #Scales values from min to max to 0-1
             for values in hash.values():
                 for item, weight in values.items():

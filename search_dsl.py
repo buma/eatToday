@@ -390,7 +390,8 @@ for n in self.simplify_if_same(node.children, node)]
                 FoodNutrition.__table__.columns)) + self.chosen_columns
 
     def make_joins(self):
-        if Tag in self.tables and FoodNutrition in self.tables:
+        if Tag in self.tables and FoodNutrition in self.tables and \
+            LocalNutritionaliase not in self.tables:
             self.tables.add(LocalNutrition)
         if Item in self.tables and FoodNutrition in self.tables:
             self.joins.append(join(FoodNutrition, Item,
@@ -418,6 +419,17 @@ for n in self.simplify_if_same(node.children, node)]
                         LocalNutritionaliase,
                         FoodNutritionDetails.ndbno==LocalNutritionaliase.ndbno))
                     self.where.append(FoodNutrition.id==FoodNutritionDetails.fn_id)
+            #if Tag in self.tables and LocalNutritionaliase in self.tables:
+                #self.joins.append(join(Tag, TagItem,
+                        #TagItem.tag_id==Tag.id))
+                #self.where.append(TagItem.ndbno==LocalNutritionaliase.ndbno)
+        #else:
+            #if Tag in self.tables:
+                ##self.joins.append(join(FoodNutritionDetails, TagItem,
+                    ##FoodNutritionDetails.ndbno==TagItem.ndbno))
+                #self.where.append(TagItem.tag_id==Tag.id)
+                #self.where.append(TagItem.ndbno==FoodNutritionDetails.ndbno)
+                        
 
 
     def get_sql(self, query):

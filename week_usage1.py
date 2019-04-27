@@ -3,7 +3,8 @@ import datetime
 import dateutil.relativedelta
 import sqlalchemy
 import itertools
-from sqlalchemy.sql import func
+from sqlalchemy.sql import func, case, literal_column, cast
+from sqlalchemy import Float
 from sqlalchemy.orm import sessionmaker
 
 from tabulate import tabulate
@@ -29,22 +30,28 @@ LAST_MONDAY = dateutil.relativedelta.relativedelta(
 
 now = datetime.datetime.now()
 START_OF_MONTH=now.replace(day=1)
-#week_before =  (now+LAST_MONDAY)
-week_before = START_OF_MONTH
+week_before =  (now+LAST_MONDAY)
+#week_before = START_OF_MONTH
 now = (now+dateutil.relativedelta.relativedelta(days=1))
 
 print ("{} - {}".format(week_before, now))
 def get_ingkey():
+    xpr = case([
+        (LocalNutrition.package_weight != None,
+        cast(literal_column("weight_sum"), Float)/LocalNutrition.package_weight)],
+        else_=None)
 #Week usage on ingkeys
     items = session.query(FoodNutritionDetailsTime.nutritionaliases_ingkey,
             func.sum(FoodNutritionDetailsTime.foodnutrition_details_weight*100) \
-                    .label("weight_sum"), LocalNutrition.package_weight) \
+                    .label("weight_sum"), xpr) \
                     .filter(FoodNutritionDetailsTime.eat_time.between( \
                         week_before.date(), now.date())) \
                     .filter(LocalNutrition.ndbno==
                             FoodNutritionDetailsTime.foodnutrition_details_ndbno) \
                     .group_by(FoodNutritionDetailsTime.foodnutrition_details_ndbno) \
                     .order_by(sqlalchemy.desc("weight_sum"))
+    print(items)
+    return items
     for amount, value, package_weight in items:
         packages = 0
         if package_weight is not None:
@@ -92,7 +99,7 @@ dbs = {
             )
         }
 
-DB = "tags"
+DB = "ingkey"
 
 
 

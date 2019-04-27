@@ -1126,6 +1126,13 @@
            </widget>
           </item>
           <item>
+           <widget class="QCheckBox" name="cb_items">
+            <property name="text">
+             <string>Display items</string>
+            </property>
+           </widget>
+          </item>
+          <item>
            <spacer name="horizontalSpacer_4">
             <property name="orientation">
              <enum>Qt::Horizontal</enum>

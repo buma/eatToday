@@ -1,6 +1,8 @@
 import itertools
 from datetime import datetime
 import sqlalchemy                                                                                                                                                
+
+from sqlalchemy import or_
 from sqlalchemy.orm import sessionmaker                                                                                                                          
 from sqlalchemy.exc import DBAPIError   
 from sqlalchemy.orm import joinedload
@@ -15,13 +17,18 @@ engine = sqlalchemy.create_engine(connectString)
 Session = sessionmaker(bind=engine)
 
 session = Session() 
+
+ndbnos_tus = session.query(Price.ndbno.distinct()) \
+        .filter(Price.shop_id==0)
+
 #Crni kruh 3 beli 2
 prices=session.query(Price) \
         .join(LocalNutrition) \
+        .join(TagItem) \
+        .filter(or_(TagItem.tag_id==2, TagItem.tag_id==3) ) \
         .order_by(LocalNutrition.desc) \
-        .order_by(Price.price)
-        #.join(TagItem) \
-        #.filter(TagItem.tag_id==2) \
+        #.order_by(Price.price)
+        #.filter(Price.ndbno.in_(ndbnos_tus)) \
 def grouper(item):
     return item.ndbno
 

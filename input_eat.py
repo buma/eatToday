@@ -37,6 +37,7 @@ def init_add_eat(self):
     eating_model = QSqlTableModel()
     eating_model.setTable("eat")
     eating_model.select()
+    self.eating_model = eating_model
 
     nutri_model = QSqlRelationalTableModel()
     nutri_model.setTable("nutrition")

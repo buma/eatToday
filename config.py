@@ -1,8 +1,8 @@
 import math
 from database import LocalNutrition
 weight = 66 #6:54 20.6 7:42 21.6 63 24.7 66
-needed_kcal = 2200
-needed_kcal_lunch = 1300
+needed_kcal = 2400
+needed_kcal_lunch = 1440
 #First number are actual calories of lunch
 diff = 0 #  721-500
 #Calculated based on 15:00-7:00/2 per 2 hours

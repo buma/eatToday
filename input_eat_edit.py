@@ -40,7 +40,7 @@ LEFT JOIN
    JOIN food_tag ON food_tag.id == food_tag_item.tag_id
    GROUP BY food_tag_item.fn_id) ON ffn_id ==foodnutrition.id
 GROUP BY foodnutrition.id
-ORDER BY eat.description
+ORDER BY foodnutrition.id DESC
     """)
     
 
@@ -210,6 +210,10 @@ ORDER BY id
             self.buttonBox_edit_eat.accepted.connect(update_model)
             self.buttonBox_edit_eat.button(QDialogButtonBox.Reset).clicked.connect(reset_update_model)
             self.tv_eat_view.horizontalHeader().setStretchLastSection(False)
+            self.tv_eat_view.setSortingEnabled(True)
+            #for i in [2,5,6,7,8]:
+            for i in [2,5,9]:
+                self.tv_eat_view.setColumnHidden(i, True)
         else:
             fill_food_tags_model()
             self.buttonBox_edit_eat.accepted.connect(update_food_tags)
